@@ -10,8 +10,8 @@ services:
     plan: free
     runtime: node
     rootDir: projects/crm/backend
-    buildCommand: npm ci --include=dev && npx prisma generate && npm run build
-    startCommand: npx prisma db push --accept-data-loss && (npx tsx prisma/seed.ts || echo "Seed skipped") && node dist/server.js
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build && npx tsc --esModuleInterop --module commonjs --outDir dist --rootDir . prisma/seed.ts --skipLibCheck
+    startCommand: npx prisma db push --accept-data-loss && (node dist/prisma/seed.js || echo "Seed skipped") && node dist/server.js
     envVars:
       - key: NODE_ENV
         value: production
