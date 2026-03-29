@@ -19,7 +19,9 @@ vi.mock('../../../lib/api', () => ({
   },
 }));
 
-const mockedApi = vi.mocked(api);
+// Cast to any so vi.mocked mock methods are accessible on overloaded axios methods
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockedApi = vi.mocked(api) as any;
 
 // ---------------------------------------------------------------------------
 // Test wrapper with a fresh QueryClient per test

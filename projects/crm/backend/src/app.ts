@@ -12,6 +12,8 @@ import authRoutes from './modules/auth/auth.routes';
 import clientRoutes from './modules/clients/clients.routes';
 import opportunityRoutes, { clientOpportunityRoutes } from './modules/opportunities/opportunities.routes';
 import activityRoutes, { clientActivityRoutes } from './modules/activities/activities.routes';
+import communicationsRoutes, { clientMessagesRoutes } from './modules/communications/communications.routes';
+import reportsRoutes from './modules/reports/reports.routes';
 import { AppError } from './shared/utils/errors';
 
 export async function buildApp() {
@@ -128,9 +130,14 @@ export async function buildApp() {
       await v1.register(opportunityRoutes, { prefix: '/opportunities' });
       await v1.register(activityRoutes, { prefix: '/activities' });
 
-      // Nested client routes: /clients/:clientId/opportunities and /clients/:clientId/activities
+      await v1.register(communicationsRoutes, { prefix: '/communications' });
+      await v1.register(reportsRoutes, { prefix: '/reports' });
+
+      // Nested client routes: /clients/:clientId/opportunities, /clients/:clientId/activities
+      // and /clients/:clientId/messages
       await v1.register(clientOpportunityRoutes, { prefix: '/clients' });
       await v1.register(clientActivityRoutes, { prefix: '/clients' });
+      await v1.register(clientMessagesRoutes, { prefix: '/clients' });
     },
     { prefix: '/api/v1' },
   );

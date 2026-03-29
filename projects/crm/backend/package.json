@@ -2,7 +2,7 @@
   "name": "crm-ciudad-moto-backend",
   "version": "1.0.0",
   "description": "CRM Ciudad Moto — Backend API",
-  "main": "dist/app.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",

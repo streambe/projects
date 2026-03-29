@@ -63,6 +63,11 @@ export const ListActivitiesQuerySchema = z.object({
   assignedTo: z.string().uuid().optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
+  overdue: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true')
+    .pipe(z.boolean().optional()),
 });
 
 export type ListActivitiesQuery = z.infer<typeof ListActivitiesQuerySchema>;

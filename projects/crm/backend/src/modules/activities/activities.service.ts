@@ -95,6 +95,7 @@ export const ActivitiesService = {
 
   /**
    * Lists activities with optional filters.
+   * Ordering: pendiente first (scheduledAt asc), then realizada (updatedAt desc).
    */
   async list(query: ListActivitiesQuery) {
     const { skip, take } = getPrismaPageParams({ page: query.page, limit: query.limit });
@@ -112,22 +113,66 @@ export const ActivitiesService = {
       };
     }
 
-    const [total, data] = await prisma.$transaction([
-      prisma.activity.count({ where }),
-      prisma.activity.findMany({
+    // ?overdue=true — pendiente activities whose dueAt is in the past
+    if (query.overdue) {
+      where.status = 'pendiente';
+      where.dueAt = { lt: new Date() };
+    }
+
+    // Fetch all matching activities so we can apply dual-sort (pendiente first then realizada).
+    // For large datasets this is done with two separate ordered queries + count.
+    const total = await prisma.activity.count({ where });
+
+    // Strategy: fetch paginated results with a compound order that Prisma does not directly
+    // support (different order per status value). We use two separate queries to compose
+    // the ordered result set and then apply pagination manually.
+    const pendienteWhere: Prisma.ActivityWhereInput = { ...where, status: 'pendiente' };
+    const realizadaWhere: Prisma.ActivityWhereInput = { ...where, status: 'realizada' };
+
+    // When a status filter is active we restrict accordingly to avoid phantom records.
+    const hasSingleStatusFilter =
+      where.status === 'pendiente' || where.status === 'realizada' || query.overdue;
+
+    let data;
+    if (hasSingleStatusFilter) {
+      const effectiveStatus = query.overdue ? 'pendiente' : (where.status as string);
+      const orderBy =
+        effectiveStatus === 'realizada'
+          ? { updatedAt: 'desc' as const }
+          : { scheduledAt: 'asc' as const };
+
+      data = await prisma.activity.findMany({
         where,
         select: activitySelect,
-        orderBy: { scheduledAt: 'asc' },
+        orderBy,
         skip,
         take,
-      }),
-    ]);
+      });
+    } else {
+      // No status filter: merge pendiente (scheduledAt asc) + realizada (updatedAt desc)
+      const [pendiente, realizada] = await Promise.all([
+        prisma.activity.findMany({
+          where: pendienteWhere,
+          select: activitySelect,
+          orderBy: { scheduledAt: 'asc' },
+        }),
+        prisma.activity.findMany({
+          where: realizadaWhere,
+          select: activitySelect,
+          orderBy: { updatedAt: 'desc' },
+        }),
+      ]);
+
+      const merged = [...pendiente, ...realizada];
+      data = merged.slice(skip, skip + take);
+    }
 
     return buildPaginatedResult(data, total, { page: query.page, limit: query.limit });
   },
 
   /**
    * Lists activities for a specific client.
+   * Applies the same ordering strategy: pendiente first (scheduledAt asc), realizada last (updatedAt desc).
    */
   async listByClient(clientId: string, query: ListActivitiesQuery) {
     const client = await prisma.client.findUnique({
@@ -141,17 +186,60 @@ export const ActivitiesService = {
     const where: Prisma.ActivityWhereInput = { clientId };
     if (query.status) where.status = query.status;
     if (query.type) where.type = query.type;
+    if (query.assignedTo) where.responsibleUserId = query.assignedTo;
 
-    const [total, data] = await prisma.$transaction([
-      prisma.activity.count({ where }),
-      prisma.activity.findMany({
+    if (query.dateFrom || query.dateTo) {
+      where.scheduledAt = {
+        ...(query.dateFrom && { gte: new Date(query.dateFrom) }),
+        ...(query.dateTo && { lte: new Date(query.dateTo) }),
+      };
+    }
+
+    if (query.overdue) {
+      where.status = 'pendiente';
+      where.dueAt = { lt: new Date() };
+    }
+
+    const total = await prisma.activity.count({ where });
+
+    const hasSingleStatusFilter =
+      where.status === 'pendiente' || where.status === 'realizada' || query.overdue;
+
+    let data;
+    if (hasSingleStatusFilter) {
+      const effectiveStatus = query.overdue ? 'pendiente' : (where.status as string);
+      const orderBy =
+        effectiveStatus === 'realizada'
+          ? { updatedAt: 'desc' as const }
+          : { scheduledAt: 'asc' as const };
+
+      data = await prisma.activity.findMany({
         where,
         select: activitySelect,
-        orderBy: { scheduledAt: 'asc' },
+        orderBy,
         skip,
         take,
-      }),
-    ]);
+      });
+    } else {
+      const pendienteWhere: Prisma.ActivityWhereInput = { ...where, status: 'pendiente' };
+      const realizadaWhere: Prisma.ActivityWhereInput = { ...where, status: 'realizada' };
+
+      const [pendiente, realizada] = await Promise.all([
+        prisma.activity.findMany({
+          where: pendienteWhere,
+          select: activitySelect,
+          orderBy: { scheduledAt: 'asc' },
+        }),
+        prisma.activity.findMany({
+          where: realizadaWhere,
+          select: activitySelect,
+          orderBy: { updatedAt: 'desc' },
+        }),
+      ]);
+
+      const merged = [...pendiente, ...realizada];
+      data = merged.slice(skip, skip + take);
+    }
 
     return buildPaginatedResult(data, total, { page: query.page, limit: query.limit });
   },
