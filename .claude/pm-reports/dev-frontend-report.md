@@ -1,50 +1,33 @@
-# Reporte: Sprint 3 — TASK-S3-02, TASK-S3-03, TASK-S3-05
+# Reporte: Vista Kanban del Pipeline (RF-11) — Sprint 4
 **Rol**: Dev Frontend
 **Fecha**: 2026-03-29
 **Estado**: Completado
 
 ## Entregables producidos
-
-### Frontend
-- `/projects/crm/frontend/src/modules/activities/activities.types.ts` — Agregados tipos `ActivityUser` y `ActivityClient`; campo `responsibleUser` y `client` como opcionales en `Activity`
-- `/projects/crm/frontend/src/modules/activities/hooks/useActivities.ts` — Agregado `assignedTo?: string` en `UseActivitiesListParams`
-- `/projects/crm/frontend/src/modules/activities/pages/ActivitiesPage.tsx` — Nuevas columnas Responsable y Vencimiento; filtro por responsable; `assignedTo` en params
-- `/projects/crm/frontend/src/modules/users/users.types.ts` — Nuevo tipo `User`
-- `/projects/crm/frontend/src/modules/users/hooks/useUsers.ts` — Hook `useUsersList()` que consulta `GET /auth/users`
-
-### Backend
-- `/projects/crm/backend/src/modules/auth/auth.service.ts` — Método `listUsers()` agregado
-- `/projects/crm/backend/src/modules/auth/auth.routes.ts` — Endpoint `GET /api/v1/auth/users` agregado
-- `/projects/crm/backend/src/modules/communications/providers/gmail.provider.ts` — Limpieza de comentarios MOCK
-- `/projects/crm/backend/src/modules/communications/providers/whatsapp.provider.ts` — Limpieza de comentarios MOCK
+- `projects/crm/frontend/src/modules/pipeline/components/KanbanColumn.tsx` — columna del Kanban con droppable zone
+- `projects/crm/frontend/src/modules/pipeline/components/KanbanDraggableCard.tsx` — wrapper draggable para KanbanCard
+- `projects/crm/frontend/src/modules/pipeline/components/KanbanBoard.tsx` — tablero completo con DndContext, 4 columnas, drag & drop
+- `projects/crm/frontend/src/modules/pipeline/components/CloseOpportunityDialog.tsx` — dialog modal para cerrar oportunidad (ganado/perdido)
+- `projects/crm/frontend/src/modules/pipeline/pages/PipelinePage.tsx` — pagina contenedora con filtros y titulo
+- `projects/crm/frontend/src/App.tsx` — ruta `/pipeline` registrada (reemplazo del placeholder)
+- `projects/crm/frontend/INSTALL_DEPENDENCIES.md` — nota de dependencias faltantes
 
 ## Resumen de lo realizado
-
-### TASK-S3-02 (BUG-008): Columnas Responsable + Vencimiento
-- El tipo `Activity` en el frontend no tenía los campos de relación que el backend ya devuelve (`responsibleUser`, `client`). Se agregaron como campos opcionales.
-- En la tabla de actividades se agregaron dos columnas nuevas: "Responsable" (muestra `responsibleUser.fullName` o `—`) y "Vencimiento" (muestra `dueAt` formateado con date-fns en español, o `—`). La columna Vencimiento aplica estilo ámbar cuando la actividad está vencida.
-- La columna Cliente también fue mejorada para mostrar el nombre completo (`firstName + lastName`) en lugar del UUID, usando el campo `client` que el backend ya incluye en la respuesta.
-
-### TASK-S3-03: Filtro por responsable
-- Se verificó que no existía un endpoint `GET /users` en el backend. Se agregó `GET /api/v1/auth/users` en el módulo auth (registrado bajo el prefijo `/auth` en app.ts), que devuelve todos los usuarios activos ordenados por nombre.
-- Se creó el módulo `users` en el frontend con tipo `User` y hook `useUsersList()`.
-- Se agregó un `<select>` de responsable en los filtros de actividades. Cuando se selecciona un usuario, su UUID se envía como parámetro `assignedTo` al hook `useActivitiesList`, que lo pasa como query param a `GET /activities?assignedTo=<uuid>` — param que el backend ya procesaba en `ListActivitiesQuerySchema`.
-- El filtro de responsable se limpia correctamente al presionar "Limpiar filtros".
-
-### TASK-S3-05: Limpieza de comentarios MOCK
-- En `gmail.provider.ts` y `whatsapp.provider.ts` se reemplazaron los encabezados "Mock implementation" por "Simulation implementation" con descripción permanente.
-- Los `console.log` con prefijo `MOCK:` fueron actualizados a prefijos descriptivos del canal (`[gmail]`, `[whatsapp]`).
-- No se modificó ninguna lógica.
+Implementacion completa de la vista Kanban del Pipeline segun el wireframe aprobado (seccion 4). El tablero muestra 4 columnas (Consulta, Prueba de manejo, Presupuesto, Cierre) con drag & drop entre ellas usando @dnd-kit/core. Al soltar una card en la columna Cierre se abre un dialog que pide resultado (ganado/perdido) y motivo si es perdido. La pagina incluye filtros por vendedor y sucursal en la barra superior. Se reutilizan el KanbanCard existente y el hook usePipeline con sus queries/mutations.
 
 ## Decisiones tomadas
-- El endpoint de usuarios se registra bajo `/auth/users` (no `/users` como decía la tarea) porque en `app.ts` el router de auth se monta en `/auth`. La URL resultante es `GET /api/v1/auth/users`.
-- Los campos `responsibleUser` y `client` en el tipo `Activity` del frontend se marcaron como opcionales (`?`) para compatibilidad con llamadas que no incluyan el join (por ejemplo, `useClientActivities`), aunque el backend siempre los incluye en el `activitySelect`.
-- `useUsersList` tiene `staleTime: 5min` porque la lista de usuarios cambia raramente.
+- Se creo un componente KanbanDraggableCard como wrapper sobre KanbanCard para separar la logica de drag del componente visual puro — esto mantiene KanbanCard testeable sin dependencia de dnd-kit
+- Se uso api.patch directamente en KanbanBoard + queryClient.invalidateQueries en vez de crear un hook por cada operacion, ya que useChangeStage requiere un id fijo y el board necesita cambiar multiples oportunidades
+- Colores por columna: sky (consulta), amber (prueba manejo), violet (presupuesto), emerald (cierre) — diferenciacion visual clara siguiendo el patron de la app
+- DragOverlay con rotacion sutil (rotate-2) para feedback visual durante el drag
+- El CloseOpportunityDialog es un modal propio (no shadcn Dialog) porque no hay componentes ui/ de shadcn instalados en el proyecto — se uso el mismo patron de inputs/botones que el resto de la app
 
 ## Bloqueantes / Riesgos
-- Hay un error TypeScript preexistente en `communications.service.ts:82` (`client.email` tipado como `string | undefined` aunque hay un guard previo). No es un error introducido por estas tareas y no afecta el runtime.
+- **BLOQUEANTE**: `@dnd-kit/core` y `@dnd-kit/utilities` NO estan en package.json. Hay que instalarlos antes de que compile: `npm install @dnd-kit/core @dnd-kit/utilities`
+- Los filtros de vendedor y sucursal estan preparados pero con arrays vacios — necesitan hooks useUsers() y useBranches() que el backend debe exponer
+- El campo de valor monetario total por columna esta preparado en KanbanColumn pero muestra 0 porque el modelo Opportunity no tiene un campo de monto — cuando se agregue, solo hay que sumar en el componente
 
 ## Recomendaciones para el siguiente rol
-- El Tester debe verificar que `GET /api/v1/auth/users` devuelva los datos correctos y que el filtro de responsable filtre actividades correctamente en la UI.
-- Confirmar con el QA que las columnas Responsable y Vencimiento aparecen en la tabla y muestran `—` cuando los campos son nulos.
-- El error preexistente en `communications.service.ts` podría corregirse en una tarea de deuda técnica separada.
+- **DevOps/Lider Tecnico**: Instalar dnd-kit antes de hacer build: `npm install @dnd-kit/core @dnd-kit/utilities`
+- **Tester QA**: Verificar drag & drop entre columnas, especialmente el caso Cierre que debe abrir el dialog. Verificar que el dialog no permite confirmar sin seleccionar resultado, y que "perdido" exige motivo
+- **Dev Backend**: Exponer endpoints GET /users y GET /branches para popular los filtros del Pipeline

@@ -66,7 +66,7 @@ export function useChangeStage(opportunityId: string) {
 
   return useMutation({
     mutationFn: async (input: ChangeStageInput) => {
-      const { data } = await api.patch<{ data: Opportunity }>(
+      const { data } = await api.put<{ data: Opportunity }>(
         `/opportunities/${opportunityId}/stage`,
         input,
       );

@@ -8,6 +8,7 @@ import { ClientProfilePage } from './modules/clients/pages/ClientProfilePage';
 import { ActivitiesPage } from './modules/activities/pages/ActivitiesPage';
 import { CommunicationsPage } from './modules/communications/pages/CommunicationsPage';
 import { ReportsPage } from './modules/reports/pages/ReportsPage';
+import { PipelinePage } from './modules/pipeline/pages/PipelinePage';
 
 export function App() {
   return (
@@ -22,13 +23,8 @@ export function App() {
             <Route path="clientes" element={<ClientsPage />} />
             <Route path="clientes/:id" element={<ClientProfilePage />} />
 
-            {/* Pipeline — placeholder until Sprint 1 pages are added */}
-            <Route
-              path="pipeline"
-              element={
-                <div className="p-6 text-gray-500">Pipeline — módulo en desarrollo.</div>
-              }
-            />
+            {/* Pipeline — Kanban board (RF-11) */}
+            <Route path="pipeline" element={<PipelinePage />} />
 
             {/* Agenda */}
             <Route path="actividades" element={<ActivitiesPage />} />
