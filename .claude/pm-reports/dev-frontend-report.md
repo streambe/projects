@@ -1,33 +1,31 @@
-# Reporte: Vista Kanban del Pipeline (RF-11) — Sprint 4
+# Reporte: Modulo de Autenticacion Frontend
 **Rol**: Dev Frontend
 **Fecha**: 2026-03-29
 **Estado**: Completado
 
 ## Entregables producidos
-- `projects/crm/frontend/src/modules/pipeline/components/KanbanColumn.tsx` — columna del Kanban con droppable zone
-- `projects/crm/frontend/src/modules/pipeline/components/KanbanDraggableCard.tsx` — wrapper draggable para KanbanCard
-- `projects/crm/frontend/src/modules/pipeline/components/KanbanBoard.tsx` — tablero completo con DndContext, 4 columnas, drag & drop
-- `projects/crm/frontend/src/modules/pipeline/components/CloseOpportunityDialog.tsx` — dialog modal para cerrar oportunidad (ganado/perdido)
-- `projects/crm/frontend/src/modules/pipeline/pages/PipelinePage.tsx` — pagina contenedora con filtros y titulo
-- `projects/crm/frontend/src/App.tsx` — ruta `/pipeline` registrada (reemplazo del placeholder)
-- `projects/crm/frontend/INSTALL_DEPENDENCIES.md` — nota de dependencias faltantes
+- `projects/crm/frontend/src/modules/auth/AuthContext.tsx` — Context + Provider con login, logout, silent refresh, axios interceptors
+- `projects/crm/frontend/src/modules/auth/pages/LoginPage.tsx` — Pagina de login con validacion y toast de error
+- `projects/crm/frontend/src/modules/auth/components/ProtectedRoute.tsx` — Guard de rutas con spinner y redirect
+- `projects/crm/frontend/src/modules/auth/index.ts` — Barrel export
+- `projects/crm/frontend/src/App.tsx` — Actualizado con AuthProvider, rutas protegidas y ruta /login publica
+- `projects/crm/frontend/src/lib/api.ts` — Limpiado: removido interceptor global viejo, ahora lo maneja AuthProvider
 
 ## Resumen de lo realizado
-Implementacion completa de la vista Kanban del Pipeline segun el wireframe aprobado (seccion 4). El tablero muestra 4 columnas (Consulta, Prueba de manejo, Presupuesto, Cierre) con drag & drop entre ellas usando @dnd-kit/core. Al soltar una card en la columna Cierre se abre un dialog que pide resultado (ganado/perdido) y motivo si es perdido. La pagina incluye filtros por vendedor y sucursal en la barra superior. Se reutilizan el KanbanCard existente y el hook usePipeline con sus queries/mutations.
+Modulo de autenticacion completo: AuthContext gestiona token en memoria (nunca localStorage), silent refresh al montar, interceptor de axios que agrega Bearer token y reintenta en 401 con cola de requests. Login page con estilo consistente (Tailwind, blue-600, bordes redondeados, misma tipografia). ProtectedRoute como layout route que envuelve AppLayout. TypeScript compila sin errores (tsc --noEmit OK).
 
 ## Decisiones tomadas
-- Se creo un componente KanbanDraggableCard como wrapper sobre KanbanCard para separar la logica de drag del componente visual puro — esto mantiene KanbanCard testeable sin dependencia de dnd-kit
-- Se uso api.patch directamente en KanbanBoard + queryClient.invalidateQueries en vez de crear un hook por cada operacion, ya que useChangeStage requiere un id fijo y el board necesita cambiar multiples oportunidades
-- Colores por columna: sky (consulta), amber (prueba manejo), violet (presupuesto), emerald (cierre) — diferenciacion visual clara siguiendo el patron de la app
-- DragOverlay con rotacion sutil (rotate-2) para feedback visual durante el drag
-- El CloseOpportunityDialog es un modal propio (no shadcn Dialog) porque no hay componentes ui/ de shadcn instalados en el proyecto — se uso el mismo patron de inputs/botones que el resto de la app
+- Token almacenado en useRef para acceso sincronico desde interceptors sin re-renders
+- Cola de requests pendientes durante refresh para evitar multiples refreshes simultaneos
+- Removido el interceptor global viejo de api.ts que usaba window.__accessToken (patron inseguro) — reemplazado por interceptors registrados dentro de AuthProvider
+- AuthProvider dentro de BrowserRouter para que useNavigate funcione en componentes hijos
+- Silent refresh al montar no decodifica JWT — solo marca isAuthenticated si refresh funciona
+- Login page usa misma paleta (blue-600, gray-50, rounded-xl) que el resto de la app
 
 ## Bloqueantes / Riesgos
-- **BLOQUEANTE**: `@dnd-kit/core` y `@dnd-kit/utilities` NO estan en package.json. Hay que instalarlos antes de que compile: `npm install @dnd-kit/core @dnd-kit/utilities`
-- Los filtros de vendedor y sucursal estan preparados pero con arrays vacios — necesitan hooks useUsers() y useBranches() que el backend debe exponer
-- El campo de valor monetario total por columna esta preparado en KanbanColumn pero muestra 0 porque el modelo Opportunity no tiene un campo de monto — cuando se agregue, solo hay que sumar en el componente
+- El endpoint POST /auth/refresh no devuelve datos del usuario, por lo que tras un refresh silencioso el campo `user` queda null. Si algun componente necesita user.fullName o user.role, se necesitaria un endpoint GET /auth/me o que refresh devuelva el user.
 
 ## Recomendaciones para el siguiente rol
-- **DevOps/Lider Tecnico**: Instalar dnd-kit antes de hacer build: `npm install @dnd-kit/core @dnd-kit/utilities`
-- **Tester QA**: Verificar drag & drop entre columnas, especialmente el caso Cierre que debe abrir el dialog. Verificar que el dialog no permite confirmar sin seleccionar resultado, y que "perdido" exige motivo
-- **Dev Backend**: Exponer endpoints GET /users y GET /branches para popular los filtros del Pipeline
+- TESTER_QA: validar flujo completo login -> redirect -> refresh -> logout, y que 401 en cualquier endpoint dispare refresh correctamente
+- Si se agrega un endpoint /auth/me, actualizar el useEffect de mount en AuthContext para popular el user
+- AppLayout podria mostrar el nombre del usuario logueado en el sidebar (requiere user data del punto anterior)

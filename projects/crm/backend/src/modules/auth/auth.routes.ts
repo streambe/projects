@@ -76,7 +76,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         fullName: decoded.fullName,
       } as object);
 
-      return reply.code(200).send({ accessToken });
+      return reply.code(200).send({
+        accessToken,
+        user: {
+          id: decoded.sub,
+          email: decoded.email,
+          fullName: decoded.fullName,
+        },
+      });
     },
   );
 

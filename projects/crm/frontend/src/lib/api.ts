@@ -5,12 +5,6 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined'
-    ? (window as unknown as Record<string, string>).__accessToken
-    : undefined;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// NOTE: Request & response interceptors (Authorization header, 401 refresh
+// logic) are registered by AuthProvider at mount time so they have access to
+// the in-memory token without relying on globals.
