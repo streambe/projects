@@ -1,0 +1,27 @@
+# Skills repo — clonar manualmente con: git clone https://github.com/VoltAgent/awesome-agent-skills.git awesome-agent-skills
+awesome-agent-skills/
+
+# Claude Code local config
+.claude/settings.local.json
+.claude/memory/
+
+# Proyectos — cada uno vive en su propio branch
+# Esta carpeta existe en el filesystem pero cada proyecto
+# se versiona en su propio branch: project-[nombre]
+projects/
+
+# Dependencies
+node_modules/
+.env
+.env.local
+.env*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
