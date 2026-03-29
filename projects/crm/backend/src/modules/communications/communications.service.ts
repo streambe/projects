@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '../../shared/utils/errors';
 import { MockGmailProvider } from './providers/gmail.provider';
 import { MockWhatsAppProvider } from './providers/whatsapp.provider';
 import type { SendEmailBody, SendWhatsAppBody } from './communications.schema';
+import type { Message as PrismaMessage } from '../../../node_modules/.prisma/client';
 
 // ---------------------------------------------------------------------------
 // Provider singletons
@@ -207,6 +208,7 @@ export const CommunicationsService = {
 
   /**
    * Returns the unified message history for a client (RF-23).
+   * Maps `sentReceivedAt` → `sentAt` to match the frontend Message interface.
    */
   async getClientMessages(clientId: string) {
     const client = await prisma.client.findUnique({
@@ -220,11 +222,15 @@ export const CommunicationsService = {
       orderBy: { sentReceivedAt: 'desc' },
     });
 
-    return messages;
+    return messages.map((msg: PrismaMessage) => {
+      const { sentReceivedAt, ...rest } = msg;
+      return { ...rest, sentAt: sentReceivedAt.toISOString() };
+    });
   },
 
   /**
    * Returns messages that have not been linked to any client (RF-24).
+   * Maps `sentReceivedAt` → `sentAt` to match the frontend Message interface.
    */
   async getUnlinkedMessages() {
     const messages = await prisma.message.findMany({
@@ -232,7 +238,10 @@ export const CommunicationsService = {
       orderBy: { sentReceivedAt: 'desc' },
     });
 
-    return messages;
+    return messages.map((msg: PrismaMessage) => {
+      const { sentReceivedAt, ...rest } = msg;
+      return { ...rest, sentAt: sentReceivedAt.toISOString() };
+    });
   },
 
   /**

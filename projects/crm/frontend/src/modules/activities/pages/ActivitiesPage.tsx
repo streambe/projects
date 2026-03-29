@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { cn } from '../../../lib/utils';
 import { useActivitiesList, useMarkActivityDone } from '../hooks/useActivities';
+import { useUsersList } from '../../users/hooks/useUsers';
 import type { ActivityStatus, ActivityType } from '../activities.types';
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,7 @@ export function ActivitiesPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [overdue, setOverdue] = useState(false);
+  const [assignedTo, setAssignedTo] = useState('');
 
   const params = {
     ...(status && { status }),
@@ -68,9 +70,11 @@ export function ActivitiesPage() {
     ...(dateFrom && { dateFrom }),
     ...(dateTo && { dateTo }),
     ...(overdue && { overdue: true }),
+    ...(assignedTo && { assignedTo }),
   };
 
   const { data, isLoading, isError } = useActivitiesList(params);
+  const { data: users } = useUsersList();
   const markDone = useMarkActivityDone();
 
   const activities = data?.data ?? [];
@@ -97,6 +101,8 @@ export function ActivitiesPage() {
     const dateToCheck = activity.dueAt ?? activity.scheduledAt;
     return isPast(parseISO(dateToCheck));
   }
+
+  const hasActiveFilters = !!(status || type || dateFrom || dateTo || overdue || assignedTo);
 
   return (
     <div className="space-y-6 p-6">
@@ -145,6 +151,26 @@ export function ActivitiesPage() {
               <option value="llamada">Llamada</option>
               <option value="reunion">Reunión</option>
               <option value="tarea">Tarea</option>
+            </select>
+          </div>
+
+          {/* Responsable */}
+          <div className="min-w-[180px]">
+            <label htmlFor="filter-assigned-to" className="block text-xs font-medium text-gray-600 mb-1">
+              Responsable
+            </label>
+            <select
+              id="filter-assigned-to"
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos</option>
+              {users?.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.fullName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -199,7 +225,7 @@ export function ActivitiesPage() {
           </div>
 
           {/* Clear filters */}
-          {(status || type || dateFrom || dateTo || overdue) && (
+          {hasActiveFilters && (
             <button
               type="button"
               onClick={() => {
@@ -208,6 +234,7 @@ export function ActivitiesPage() {
                 setDateFrom('');
                 setDateTo('');
                 setOverdue(false);
+                setAssignedTo('');
               }}
               className="self-end pb-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
             >
@@ -246,7 +273,13 @@ export function ActivitiesPage() {
                   Cliente
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Responsable
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Fecha
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Vencimiento
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Estado
@@ -298,13 +331,36 @@ export function ActivitiesPage() {
                         to={`/clientes/${activity.clientId}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                       >
-                        {activity.clientId}
+                        {activity.client
+                          ? `${activity.client.firstName} ${activity.client.lastName}`
+                          : activity.clientId}
                       </Link>
+                    </td>
+
+                    {/* Responsable */}
+                    <td className="px-4 py-3 text-gray-700">
+                      {activity.responsibleUser?.fullName ?? '—'}
                     </td>
 
                     {/* Fecha */}
                     <td className="px-4 py-3 text-gray-600">
                       {format(parseISO(activity.scheduledAt), "d 'de' MMMM yyyy", { locale: es })}
+                    </td>
+
+                    {/* Vencimiento */}
+                    <td className="px-4 py-3">
+                      {activity.dueAt ? (
+                        <span
+                          className={cn(
+                            'text-gray-600',
+                            overdueFn && 'font-medium text-amber-700',
+                          )}
+                        >
+                          {format(parseISO(activity.dueAt), "d 'de' MMMM yyyy", { locale: es })}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
 
                     {/* Estado */}

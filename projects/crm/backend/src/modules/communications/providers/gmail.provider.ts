@@ -5,17 +5,18 @@ import type { SentMessage, IncomingMessage } from '../communications.schema';
 // ---------------------------------------------------------------------------
 
 export interface GmailProvider {
-  sendEmail(to: string, subject: string, body: string): Promise<SentMessage>;
+  sendEmail(to: string, subject: string | undefined, body: string): Promise<SentMessage>;
   getInbox(): Promise<IncomingMessage[]>;
 }
 
 // ---------------------------------------------------------------------------
-// Mock implementation
+// Simulation implementation
+// Returns realistic-looking data without connecting to any external service.
 // ---------------------------------------------------------------------------
 
 export class MockGmailProvider implements GmailProvider {
-  async sendEmail(to: string, subject: string, body: string): Promise<SentMessage> {
-    console.log(`MOCK: would send to ${to}`);
+  async sendEmail(to: string, subject: string | undefined, body: string): Promise<SentMessage> {
+    console.log(`[gmail] simulated send to ${to}`);
 
     return {
       id: `mock-gmail-${Date.now()}`,

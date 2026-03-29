@@ -133,6 +133,22 @@ export const AuthService = {
   },
 
   /**
+   * Returns all active users. Used to populate responsible user selectors in the UI.
+   */
+  async listUsers() {
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+      },
+      orderBy: { fullName: 'asc' },
+    });
+    return users;
+  },
+
+  /**
    * Builds the JWT payload for a given user.
    */
   buildTokenPayload(user: {

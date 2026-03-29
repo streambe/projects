@@ -13,6 +13,18 @@ export const ACTIVITY_STATUS = {
 
 export type ActivityStatus = (typeof ACTIVITY_STATUS)[keyof typeof ACTIVITY_STATUS];
 
+export interface ActivityUser {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+export interface ActivityClient {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface Activity {
   id: string;
   type: ActivityType;
@@ -26,6 +38,8 @@ export interface Activity {
   summary?: string | null;
   createdAt: string;
   updatedAt: string;
+  responsibleUser?: ActivityUser | null;
+  client?: ActivityClient | null;
 }
 
 export interface CreateActivityInput {

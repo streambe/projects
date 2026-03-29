@@ -23,6 +23,7 @@ export interface UseActivitiesListParams {
   dateTo?: string;
   overdue?: boolean;
   clientId?: string;
+  assignedTo?: string;
   limit?: number;
 }
 

@@ -10,12 +10,13 @@ export interface WhatsAppProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Mock implementation
+// Simulation implementation
+// Returns realistic-looking data without connecting to any external service.
 // ---------------------------------------------------------------------------
 
 export class MockWhatsAppProvider implements WhatsAppProvider {
   async sendMessage(to: string, body: string): Promise<SentMessage> {
-    console.log(`MOCK: would send to ${to}`);
+    console.log(`[whatsapp] simulated send to ${to}`);
 
     return {
       id: `mock-whatsapp-${Date.now()}`,

@@ -142,6 +142,30 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   /**
+   * GET /api/v1/auth/users
+   * Returns all active users. Used to populate responsible-user selectors in the UI.
+   */
+  fastify.get(
+    '/users',
+    { preHandler: [fastify.authenticate] },
+    async (_request, reply) => {
+      try {
+        const users = await AuthService.listUsers();
+        return reply.code(200).send({ data: users });
+      } catch (err) {
+        if (err instanceof AppError) {
+          return reply.code(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.name,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
    * PUT /api/v1/users/:id  (RF-28)
    * Updates a user's editable fields. Requires authentication.
    */
