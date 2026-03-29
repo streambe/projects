@@ -6,8 +6,8 @@ export const COMM_CHANNEL = {
 export type CommChannel = (typeof COMM_CHANNEL)[keyof typeof COMM_CHANNEL];
 
 export const COMM_DIRECTION = {
-  sent: 'sent',
-  received: 'received',
+  outbound: 'outbound',
+  inbound: 'inbound',
 } as const;
 
 export type CommDirection = (typeof COMM_DIRECTION)[keyof typeof COMM_DIRECTION];
@@ -25,7 +25,7 @@ export interface Message {
 
 export interface SendGmailInput {
   clientId: string;
-  subject: string;
+  subject?: string;
   body: string;
 }
 

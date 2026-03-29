@@ -56,9 +56,7 @@ export function useClientActivities(clientId: string) {
   return useQuery({
     queryKey: activityQueryKeys.byClient(clientId),
     queryFn: async () => {
-      const { data } = await api.get<ActivitiesListResponse>('/activities', {
-        params: { clientId, limit: 200 },
-      });
+      const { data } = await api.get<ActivitiesListResponse>(`/clients/${clientId}/activities`);
       return data;
     },
     enabled: !!clientId,

@@ -26,7 +26,7 @@ export interface IncomingMessage {
 
 export const SendEmailSchema = z.object({
   clientId: z.string().uuid('clientId must be a valid UUID'),
-  subject: z.string().min(1, 'Subject is required').max(500),
+  subject: z.string().max(500).optional(),
   body: z.string().min(1, 'Body is required'),
 });
 

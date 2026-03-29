@@ -28,9 +28,7 @@ export function useClientMessages(clientId: string) {
   return useQuery({
     queryKey: commQueryKeys.byClient(clientId),
     queryFn: async () => {
-      const { data } = await api.get<MessagesListResponse>('/communications', {
-        params: { clientId, limit: 200 },
-      });
+      const { data } = await api.get<{ data: Message[] }>(`/clients/${clientId}/messages`);
       return data;
     },
     enabled: !!clientId,

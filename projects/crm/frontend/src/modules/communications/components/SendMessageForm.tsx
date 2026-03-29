@@ -40,11 +40,7 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
 
     try {
       if (channel === 'gmail') {
-        if (!subject.trim()) {
-          toast.error('El asunto es obligatorio para correos.');
-          return;
-        }
-        await sendGmail.mutateAsync({ clientId, subject, body });
+        await sendGmail.mutateAsync({ clientId, subject: subject.trim() || undefined, body });
       } else {
         await sendWhatsApp.mutateAsync({ clientId, body });
       }
@@ -108,7 +104,7 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
       {channel === 'gmail' && (
         <div>
           <label htmlFor="msg-subject" className="block text-xs font-medium text-gray-600 mb-1">
-            Asunto <span className="text-red-500">*</span>
+            Asunto
           </label>
           <input
             id="msg-subject"

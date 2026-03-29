@@ -63,7 +63,7 @@ export function MessageThread({ messages, isLoading }: MessageThreadProps) {
   return (
     <div className="flex flex-col gap-3 p-4" role="log" aria-label="Historial de mensajes">
       {sorted.map((msg) => {
-        const isSent = msg.direction === 'sent';
+        const isSent = msg.direction === 'outbound';
         return (
           <div
             key={msg.id}

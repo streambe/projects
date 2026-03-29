@@ -11,7 +11,7 @@ export const ReportsService = {
    * Report RF-25: New clients registered in the given date range.
    */
   async newClients(query: DateRangeQuery) {
-    const where: Prisma.ClientWhereInput = {};
+    const where: Prisma.ClientWhereInput = { isActive: true };
 
     if (query.from || query.to) {
       where.createdAt = {
@@ -53,7 +53,7 @@ export const ReportsService = {
    * Report RF-26: Activities grouped by responsible user for the given date range.
    */
   async activitiesByUser(query: DateRangeQuery) {
-    const where: Prisma.ActivityWhereInput = {};
+    const where: Prisma.ActivityWhereInput = { status: 'realizada' };
 
     if (query.from || query.to) {
       where.scheduledAt = {
