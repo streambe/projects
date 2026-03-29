@@ -274,6 +274,7 @@ export const CommunicationsService = {
       },
     });
 
-    return updated;
+    const { sentReceivedAt, ...rest } = updated;
+    return { ...rest, sentAt: sentReceivedAt.toISOString() };
   },
 };

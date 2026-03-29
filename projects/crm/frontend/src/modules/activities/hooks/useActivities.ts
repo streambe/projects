@@ -74,7 +74,7 @@ export function useMarkActivityDone() {
   return useMutation({
     mutationFn: async (id: string) => {
       const input: UpdateActivityInput = { status: 'realizada' };
-      const { data } = await api.patch<{ data: Activity }>(`/activities/${id}`, input);
+      const { data } = await api.put<{ data: Activity }>(`/activities/${id}`, input);
       return data.data;
     },
     onSuccess: () => {

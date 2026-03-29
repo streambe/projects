@@ -67,8 +67,8 @@ export function ActivitiesPage() {
   const params = {
     ...(status && { status }),
     ...(type && { type }),
-    ...(dateFrom && { dateFrom }),
-    ...(dateTo && { dateTo }),
+    ...(dateFrom && { dateFrom: `${dateFrom}T00:00:00.000Z` }),
+    ...(dateTo && { dateTo: `${dateTo}T23:59:59.999Z` }),
     ...(overdue && { overdue: true }),
     ...(assignedTo && { assignedTo }),
   };
