@@ -7,6 +7,7 @@ import {
   ListActivitiesQuerySchema,
 } from './activities.schema';
 import { AppError } from '../../shared/utils/errors';
+import type { JwtPayload } from '../auth/auth.schema';
 
 const activityRoutes: FastifyPluginAsync = async (fastify) => {
   /**
@@ -29,7 +30,8 @@ const activityRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const activity = await ActivitiesService.create(parsed.data);
+        const requestingUserId = (request.user as JwtPayload).sub;
+        const activity = await ActivitiesService.create(parsed.data, requestingUserId);
         return reply.code(201).send({ data: activity });
       } catch (err) {
         if (err instanceof AppError) {

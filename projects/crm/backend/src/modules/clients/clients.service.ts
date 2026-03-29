@@ -1,6 +1,6 @@
 import type { Prisma } from '.prisma/client';
 import { prisma } from '../../prisma/client';
-import { NotFoundError } from '../../shared/utils/errors';
+import { NotFoundError, ConflictError } from '../../shared/utils/errors';
 import {
   getPrismaPageParams,
   buildPaginatedResult,
@@ -61,6 +61,47 @@ async function findDuplicate(
   return null;
 }
 
+/**
+ * Same as findDuplicate but operates within a Prisma transaction context.
+ * Used inside prisma.$transaction to ensure the check and create are atomic.
+ */
+async function findDuplicateInTx(
+  tx: Prisma.TransactionClient,
+  dni: string | undefined,
+  phonePrimary: string | undefined,
+  excludeId?: string,
+): Promise<DuplicateConflict | null> {
+  if (dni) {
+    const byDni = await tx.client.findUnique({
+      where: { dni },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    if (byDni && byDni.id !== excludeId) {
+      return {
+        id: byDni.id,
+        fullName: `${byDni.firstName} ${byDni.lastName}`,
+        field: 'dni',
+      };
+    }
+  }
+
+  if (phonePrimary) {
+    const byPhone = await tx.client.findUnique({
+      where: { phonePrimary },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    if (byPhone && byPhone.id !== excludeId) {
+      return {
+        id: byPhone.id,
+        fullName: `${byPhone.firstName} ${byPhone.lastName}`,
+        field: 'phonePrimary',
+      };
+    }
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Client select shape (reused across queries)
 // ---------------------------------------------------------------------------
@@ -97,28 +138,58 @@ export const ClientsService = {
     client: object | null;
     conflict: DuplicateConflict | null;
   }> {
-    const conflict = await findDuplicate(data.dni, data.phonePrimary);
-    if (conflict) return { client: null, conflict };
+    try {
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const conflict = await findDuplicateInTx(tx, data.dni, data.phonePrimary);
+        if (conflict) return { client: null, conflict };
 
-    const client = await prisma.client.create({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dni: data.dni,
-        phonePrimary: data.phonePrimary,
-        phoneAlt: data.phoneAlt,
-        email: data.email,
-        whatsappNumber: data.whatsappNumber,
-        city: data.city,
-        province: data.province,
-        birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
-        howFoundUs: data.howFoundUs,
-        notes: data.notes,
-      },
-      select: clientSelect,
-    });
+        const client = await tx.client.create({
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            dni: data.dni,
+            phonePrimary: data.phonePrimary,
+            phoneAlt: data.phoneAlt,
+            email: data.email,
+            whatsappNumber: data.whatsappNumber,
+            city: data.city,
+            province: data.province,
+            birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+            howFoundUs: data.howFoundUs,
+            notes: data.notes,
+          },
+          select: clientSelect,
+        });
 
-    return { client, conflict: null };
+        return { client, conflict: null };
+      });
+
+      return result;
+    } catch (err: unknown) {
+      // P2002 = Unique constraint violation — another concurrent request won the race
+      if (
+        err !== null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code: string }).code === 'P2002'
+      ) {
+        const prismaErr = err as { meta?: { target?: string[] } };
+        const field = prismaErr.meta?.target?.includes('phonePrimary')
+          ? 'phonePrimary'
+          : 'dni';
+        const conflictingClient = await prisma.client.findFirst({
+          where: field === 'dni' ? { dni: data.dni } : { phonePrimary: data.phonePrimary },
+          select: { id: true, firstName: true, lastName: true },
+        });
+        if (conflictingClient) {
+          throw new ConflictError(
+            `A client with this ${field} already exists: ${conflictingClient.firstName} ${conflictingClient.lastName} (id: ${conflictingClient.id})`,
+          );
+        }
+        throw new ConflictError(`A client with this ${field} already exists`);
+      }
+      throw err;
+    }
   },
 
   /**

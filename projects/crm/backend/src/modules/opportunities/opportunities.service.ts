@@ -42,28 +42,32 @@ const opportunitySelect = {
 export const OpportunitiesService = {
   /**
    * Creates a new opportunity linked to a client.
+   * requestingUserId is used as fallback for assignedUserId when not provided in body.
    */
-  async create(data: CreateOpportunityBody) {
-    // Verify client exists
+  async create(data: CreateOpportunityBody, requestingUserId: string) {
+    // Verify client exists and is active
     const client = await prisma.client.findUnique({
       where: { id: data.clientId },
+      select: { id: true, isActive: true },
+    });
+    if (!client || !client.isActive) {
+      throw new NotFoundError('Cliente no encontrado o inactivo');
+    }
+
+    // Resolve assignedUserId: use body value or fall back to the requesting user
+    const assignedUserId = data.assignedUserId ?? requestingUserId;
+
+    // Verify assigned user exists
+    const user = await prisma.user.findUnique({
+      where: { id: assignedUserId },
       select: { id: true },
     });
-    if (!client) throw new NotFoundError('Client', data.clientId);
-
-    // Verify assigned user exists if provided
-    if (data.assignedUserId) {
-      const user = await prisma.user.findUnique({
-        where: { id: data.assignedUserId },
-        select: { id: true },
-      });
-      if (!user) throw new NotFoundError('User', data.assignedUserId);
-    }
+    if (!user) throw new NotFoundError('User', assignedUserId);
 
     const opportunity = await prisma.opportunity.create({
       data: {
         clientId: data.clientId,
-        assignedUserId: data.assignedUserId,
+        assignedUserId,
         motoInterest: data.motoInterest,
         stage: data.stage,
       },
@@ -75,6 +79,7 @@ export const OpportunitiesService = {
 
   /**
    * Lists all opportunities (for kanban) with optional stage and isOpen filters.
+   * By default excludes closed opportunities (result != null) unless includeClosed=true.
    */
   async list(query: ListOpportunitiesQuery) {
     const { skip, take } = getPrismaPageParams({ page: query.page, limit: query.limit });
@@ -82,6 +87,12 @@ export const OpportunitiesService = {
     const where: Prisma.OpportunityWhereInput = {};
     if (query.stage) where.stage = query.stage;
     if (query.isOpen !== undefined) where.isOpen = query.isOpen;
+
+    // By default, hide closed opportunities (those with a result set).
+    // Pass ?includeClosed=true to include them.
+    if (!query.includeClosed) {
+      where.result = null;
+    }
 
     const [total, data] = await prisma.$transaction([
       prisma.opportunity.count({ where }),

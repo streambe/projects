@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../prisma/client';
-import { UnauthorizedError, ConflictError } from '../../shared/utils/errors';
-import type { RegisterBody, JwtPayload } from './auth.schema';
+import { UnauthorizedError, ConflictError, NotFoundError } from '../../shared/utils/errors';
+import type { RegisterBody, JwtPayload, UpdateUserBody } from './auth.schema';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -66,6 +66,70 @@ export const AuthService = {
     });
 
     return user;
+  },
+
+  /**
+   * Updates a user's editable fields (fullName, email, password).
+   * Throws NotFoundError if user does not exist.
+   * Throws ConflictError if the new email is already taken by another user.
+   */
+  async updateUser(id: string, data: UpdateUserBody) {
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundError('User', id);
+
+    if (data.email) {
+      const emailTaken = await prisma.user.findFirst({
+        where: { email: data.email, NOT: { id } },
+        select: { id: true },
+      });
+      if (emailTaken) throw new ConflictError('A user with this email already exists');
+    }
+
+    const updateData: {
+      fullName?: string;
+      email?: string;
+      passwordHash?: string;
+    } = {};
+
+    if (data.fullName !== undefined) updateData.fullName = data.fullName;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.password !== undefined) {
+      updateData.passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+
+    return user;
+  },
+
+  /**
+   * Soft-deletes (deactivates) a user by setting isActive = false.
+   * Throws NotFoundError if user does not exist.
+   */
+  async deactivateUser(id: string) {
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundError('User', id);
+
+    await prisma.user.update({
+      where: { id },
+      data: { isActive: false },
+    });
   },
 
   /**

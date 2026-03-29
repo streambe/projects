@@ -16,7 +16,8 @@ export const CreateActivitySchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   clientId: z.string().uuid('clientId must be a valid UUID'),
   opportunityId: z.string().uuid().optional(),
-  responsibleUserId: z.string().uuid('responsibleUserId must be a valid UUID'),
+  // Optional — defaults to the authenticated user's id when omitted
+  responsibleUserId: z.string().uuid('responsibleUserId must be a valid UUID').optional(),
   scheduledAt: z.string().datetime('scheduledAt must be a valid ISO datetime'),
   dueAt: z.string().datetime().optional(),
   summary: z.string().optional(),

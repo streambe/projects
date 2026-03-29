@@ -30,7 +30,8 @@ const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const opportunity = await OpportunitiesService.create(parsed.data);
+        const requestingUserId = (request.user as JwtPayload).sub;
+        const opportunity = await OpportunitiesService.create(parsed.data, requestingUserId);
         return reply.code(201).send({ data: opportunity });
       } catch (err) {
         if (err instanceof AppError) {

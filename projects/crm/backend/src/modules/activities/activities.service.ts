@@ -1,6 +1,6 @@
 import type { Prisma } from '.prisma/client';
 import { prisma } from '../../prisma/client';
-import { NotFoundError } from '../../shared/utils/errors';
+import { NotFoundError, ValidationError } from '../../shared/utils/errors';
 import {
   getPrismaPageParams,
   buildPaginatedResult,
@@ -47,20 +47,26 @@ const activitySelect = {
 export const ActivitiesService = {
   /**
    * Creates a new activity.
+   * requestingUserId is used as fallback for responsibleUserId when not provided in body.
    */
-  async create(data: CreateActivityBody) {
-    // Verify referenced entities exist
+  async create(data: CreateActivityBody, requestingUserId: string) {
+    // Verify client exists and is active
     const client = await prisma.client.findUnique({
       where: { id: data.clientId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
-    if (!client) throw new NotFoundError('Client', data.clientId);
+    if (!client || !client.isActive) {
+      throw new NotFoundError('Cliente no encontrado o inactivo');
+    }
+
+    // Resolve responsibleUserId: use body value or fall back to the requesting user
+    const responsibleUserId = data.responsibleUserId ?? requestingUserId;
 
     const user = await prisma.user.findUnique({
-      where: { id: data.responsibleUserId },
+      where: { id: responsibleUserId },
       select: { id: true },
     });
-    if (!user) throw new NotFoundError('User', data.responsibleUserId);
+    if (!user) throw new NotFoundError('User', responsibleUserId);
 
     if (data.opportunityId) {
       const opportunity = await prisma.opportunity.findUnique({
@@ -76,7 +82,7 @@ export const ActivitiesService = {
         title: data.title,
         clientId: data.clientId,
         opportunityId: data.opportunityId,
-        responsibleUserId: data.responsibleUserId,
+        responsibleUserId,
         scheduledAt: new Date(data.scheduledAt),
         dueAt: data.dueAt ? new Date(data.dueAt) : undefined,
         summary: data.summary,
@@ -195,6 +201,7 @@ export const ActivitiesService = {
 
   /**
    * Marks an activity as realizada, optionally adding completion notes.
+   * Throws 400 if the activity is already completed.
    */
   async complete(id: string, data: CompleteActivityBody) {
     const activity = await prisma.activity.findUnique({
@@ -202,6 +209,10 @@ export const ActivitiesService = {
       select: { id: true, status: true },
     });
     if (!activity) throw new NotFoundError('Activity', id);
+
+    if (activity.status === 'realizada') {
+      throw new ValidationError('La actividad ya fue marcada como realizada');
+    }
 
     const updated = await prisma.activity.update({
       where: { id },

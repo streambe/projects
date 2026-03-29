@@ -19,19 +19,21 @@ async function start() {
     app.log.error(err);
     process.exit(1);
   }
+
+  // Graceful shutdown — close the already-running instance, do NOT call buildApp() again.
+  const shutdown = async (signal: string) => {
+    app.log.info(`Received ${signal}, shutting down gracefully...`);
+    try {
+      await app.close();
+      process.exit(0);
+    } catch (shutdownErr) {
+      app.log.error(shutdownErr, 'Error during shutdown');
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  const app = await buildApp();
-  await app.close();
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  const app = await buildApp();
-  await app.close();
-  process.exit(0);
-});
 
 start();

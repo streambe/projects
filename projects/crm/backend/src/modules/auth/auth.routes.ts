@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { AuthService } from './auth.service';
-import { LoginBodySchema, RegisterBodySchema } from './auth.schema';
+import { LoginBodySchema, RegisterBodySchema, UpdateUserBodySchema } from './auth.schema';
 import { AppError } from '../../shared/utils/errors';
 import type { JwtPayload } from './auth.schema';
 
@@ -95,10 +95,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   /**
    * POST /api/v1/auth/register
-   * Creates a new user account.
-   * Note: In production this route should be protected or removed after initial setup.
+   * Creates a new user account. Requires an authenticated user (admin only endpoint).
    */
-  fastify.post('/register', async (request, reply) => {
+  fastify.post('/register', { preHandler: [fastify.authenticate] }, async (request, reply) => {
     const parsed = RegisterBodySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send({
@@ -139,6 +138,67 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           fullName: payload.fullName,
         },
       });
+    },
+  );
+
+  /**
+   * PUT /api/v1/users/:id  (RF-28)
+   * Updates a user's editable fields. Requires authentication.
+   */
+  fastify.put(
+    '/users/:id',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      const parsed = UpdateUserBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: parsed.error.errors[0]?.message ?? 'Validation error',
+        });
+      }
+
+      try {
+        const user = await AuthService.updateUser(id, parsed.data);
+        return reply.code(200).send({ user });
+      } catch (err) {
+        if (err instanceof AppError) {
+          return reply.code(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.name,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
+   * DELETE /api/v1/users/:id  (RF-28)
+   * Soft-deletes (deactivates) a user. Requires authentication.
+   */
+  fastify.delete(
+    '/users/:id',
+    { preHandler: [fastify.authenticate] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      try {
+        await AuthService.deactivateUser(id);
+        return reply.code(204).send();
+      } catch (err) {
+        if (err instanceof AppError) {
+          return reply.code(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.name,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
     },
   );
 };

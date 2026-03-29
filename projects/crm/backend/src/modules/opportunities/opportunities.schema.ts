@@ -20,7 +20,7 @@ export const OpportunityResultEnum = z.enum(['ganado', 'perdido']);
 export const CreateOpportunitySchema = z.object({
   clientId: z.string().uuid('clientId must be a valid UUID'),
   assignedUserId: z.string().uuid().optional(),
-  motoInterest: z.string().optional(),
+  motoInterest: z.string().min(1, 'motoInterest must not be empty').optional(),
   stage: OpportunityStageEnum.default('consulta'),
 });
 
@@ -75,6 +75,14 @@ export const ListOpportunitiesQuerySchema = z.object({
       if (v === 'false') return false;
       return undefined;
     }),
+  /**
+   * When true, include closed opportunities (result != null) in the kanban list.
+   * Defaults to false — closed opportunities are hidden by default.
+   */
+  includeClosed: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
 });
 
 export type ListOpportunitiesQuery = z.infer<typeof ListOpportunitiesQuerySchema>;
