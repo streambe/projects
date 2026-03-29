@@ -396,9 +396,10 @@ Sprint día 3: Dev corrige bugs US-001    | Tester ejecuta plan de US-002
 - `vitest run` / `jest` → 100% passing
 - Si alguno falla → el Dev lo corrige antes de reportar al PM
 
-**El PM solo commitea cuando:**
+**El PM solo commitea cuando se cumplen TODAS estas condiciones:**
 1. Dev confirma tests propios en verde
 2. Tester confirma 0 bugs P1/P2 para esa tarea
+3. Lider Tecnico completo code review y dio APROBADO (ver seccion 5.3)
 
 #### Loop de bugs
 
@@ -418,22 +419,34 @@ Tester re-ejecuta sus tests → loop hasta 0 P1/P2
 
 ---
 
-### 5.3 Code Review
+### 5.3 Code Review (BLOQUEANTE — gate obligatorio antes de commit)
 
 **Responsable:** Líder Técnico
 **Skills:** `mcollina/skills`, `debug-methodology`
 
+> **REGLA:** Ningún commit se realiza sin code review aprobado del Líder Técnico. Este es un gate obligatorio que se ejecuta DESPUÉS de que QA reporta 0 bugs P1/P2 y ANTES de que el PM commitee.
+
+**Flujo obligatorio por tarea:**
 ```
-PR abierto por el dev
-  → Líder Técnico revisa:
-       - Estándares de código y convenciones aprobadas
-       - Cobertura de tests (mínimo 80% en lógica de negocio crítica)
-       - Seguridad básica (sin secrets, inputs validados, queries parametrizadas)
-       - Performance (queries optimizadas, sin N+1, caching apropiado)
-  → Comenta en el PR
+Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
+Líder Técnico hace code review → Solo cuando QA OK + Review OK → PM commitea
+```
+
+**Criterios de review (checklist obligatoria):**
+```
+Líder Técnico revisa:
+  → Adherencia al stack y estándares aprobados
+  → Sin secrets hardcodeados (API keys, passwords, tokens)
+  → Sin vulnerabilidades obvias (OWASP top 10: inyección, XSS, etc.)
+  → Naming conventions y estructura consistentes
+  → Sin código muerto o comentado
+  → Tests cubren la lógica implementada (mínimo 80% en lógica crítica)
+  → TypeScript strict — sin `any` sin justificación
+  → Performance (queries optimizadas, sin N+1, caching apropiado)
+  → Comenta con issues específicos
   → Dev corrige
   → Líder Técnico re-revisa
-  → Loop hasta APROBADO → merge a develop
+  → Loop hasta APROBADO → PM commitea → merge a develop
 ```
 
 ---
@@ -627,7 +640,8 @@ hotfix(scope): descripción  → fix urgente en producción
 │       ↓                                                             │
 │  QA testa en preview → BUG P1/P2 → dev corrige → QA re-testa        │
 │       ↓  (0 P1, 0 P2)                                               │
-│  Líder Técnico code review → comenta → dev corrige → APROBADO       │
+│  Líder Técnico code review (BLOQUEANTE) → comenta → dev corrige     │
+│       ↓  (Review APROBADO → PM commitea)                             │
 │       ↓  (si feature crítica)                                       │
 │  Seguridad audita → CRITICAL/HIGH → dev corrige → re-audita         │
 │       ↓                                                             │

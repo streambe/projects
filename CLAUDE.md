@@ -517,7 +517,12 @@ ROLES:
     loop_especifico: |
       Stack: presenta 2-3 opciones con pros/contras reales
       → usuario elige → define estándares → usuario aprueba convenciones
-      Code Review: comenta PR → dev corrige → re-revisa → hasta APROBADO
+      Code Review (OBLIGATORIO por cada tarea antes de commit):
+        Cuando QA reporta 0 bugs P1/P2 → Líder Técnico revisa el código
+        Criterios: stack/estándares, sin secrets, OWASP top 10, naming,
+                   sin código muerto, tests cubren lógica, TypeScript strict (sin any)
+        → comenta → dev corrige → re-revisa → loop hasta APROBADO
+        → Sin este OK, el PM NO puede commitear
 
   DEV_FRONTEND:
     skills: ["anthropic/frontend-design", "vercel/nextjs", "microsoft/react-flow-node-ts"]
@@ -567,7 +572,8 @@ ROLES:
         1. Dev corrió sus tests y pasaron (tsc --noEmit + vitest/jest run)
         2. Tester ejecutó el plan de tests de esa tarea
         3. 0 bugs P1 y P2 abiertos
-        4. PM commitea con el reporte del Tester
+        4. Líder Técnico completó code review y dio APROBADO
+        5. PM commitea con el reporte del Tester + aprobación del Líder Técnico
 
   ESPECIALISTA_SEGURIDAD:
     skills: ["trail-of-bits/skills", "guard-scanner", "benlee-skillguard", "azhua-skill-vetter"]
@@ -648,12 +654,17 @@ LOOP F — DESARROLLO + QA (en paralelo desde el día 1 del sprint):
   Al recibir reporte del Dev:
     - Tester ejecuta plan de tests de esa tarea específica
     - Dev y Tester trabajan en paralelo — nunca secuencialmente
-  El PM solo commitea cuando:
-    - Dev: tests propios pasan
-    - Tester: 0 bugs P1/P2 para esa tarea
+  Cuando QA OK (0 bugs P1/P2):
+    - Líder Técnico hace code review (LOOP G — BLOQUEANTE)
 
-LOOP G – CODE REVIEW
-  PR abierto → Líder Técnico revisa → comenta → Dev corrige → repite → APROBADO
+LOOP G – CODE REVIEW (BLOQUEANTE — gate obligatorio antes de commit)
+  Líder Técnico revisa → comenta → Dev corrige → re-revisa → repite → APROBADO
+  REGLA: Ningún commit se realiza sin code review aprobado del Líder Técnico.
+
+  El PM solo commitea cuando se cumplen TODAS estas condiciones:
+    1. Dev: tests propios pasan
+    2. Tester: 0 bugs P1/P2 para esa tarea
+    3. Líder Técnico: code review APROBADO
 
 LOOP H – SEGURIDAD (si feature crítica)
   Auditoría → Vulnerabilidades → Dev corrige → Re-audita → ··· → APROBADO
@@ -912,8 +923,22 @@ PR_CHECKLIST:
   - Sin credenciales hardcodeadas
   - QA validó en Vercel preview URL
   - Skills utilizados documentados en descripción del PR
-  - Aprobado por Líder Técnico
+  - Code review aprobado por Líder Técnico (BLOQUEANTE — sin esto no se commitea)
   - Aprobado por Seguridad (si feature crítica)
+
+CODE_REVIEW_OBLIGATORIO:
+  regla: "Ningún commit se realiza sin code review aprobado del Líder Técnico"
+  flujo_por_tarea: |
+    Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
+    Líder Técnico hace code review → Solo cuando QA OK + Review OK → PM commitea
+  criterios_review:
+    - Adherencia al stack y estándares aprobados
+    - Sin secrets hardcodeados
+    - Sin vulnerabilidades obvias (OWASP top 10)
+    - Naming conventions y estructura consistentes
+    - Sin código muerto o comentado
+    - Tests cubren la lógica implementada
+    - TypeScript strict — sin `any`
 
 TESTING:
   cobertura: "80% en lógica de negocio crítica"
