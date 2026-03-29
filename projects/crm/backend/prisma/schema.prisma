@@ -1,0 +1,277 @@
+// =============================================================================
+// CRM Ciudad Moto — Prisma Schema
+// =============================================================================
+// Runtime: Node.js | ORM: Prisma v5 | DB: PostgreSQL
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum HowFoundUs {
+  instagram
+  facebook
+  google
+  referido
+  visita_directa
+  otro
+}
+
+enum OpportunityStage {
+  consulta
+  prueba_manejo
+  presupuesto
+  cierre
+}
+
+enum OpportunityResult {
+  ganado
+  perdido
+}
+
+enum ActivityType {
+  llamada
+  reunion
+  tarea
+}
+
+enum ActivityStatus {
+  pendiente
+  realizada
+}
+
+enum MessageChannel {
+  gmail
+  whatsapp
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+// =============================================================================
+// USERS
+// Users of the system (vendedores, dueños). No role differentiation in MVP.
+// =============================================================================
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  fullName     String   @map("full_name") @db.VarChar(150)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  assignedOpportunities  Opportunity[]        @relation("AssignedOpportunities")
+  opportunityHistories   OpportunityHistory[]
+  activities             Activity[]           @relation("ResponsibleUser")
+  assignedMessages       Message[]            @relation("AssignedByUser")
+
+  @@map("users")
+}
+
+// =============================================================================
+// CLIENTS
+// Physical persons registered as clients or prospects.
+// =============================================================================
+
+model Client {
+  id              String      @id @default(uuid()) @db.Uuid
+  firstName       String      @map("first_name") @db.VarChar(100)
+  lastName        String      @map("last_name") @db.VarChar(100)
+  dni             String      @unique @db.VarChar(20)
+  phonePrimary    String      @unique @map("phone_primary") @db.VarChar(30)
+  phoneAlt        String?     @map("phone_alt") @db.VarChar(30)
+  email           String?     @db.VarChar(255)
+  whatsappNumber  String?     @map("whatsapp_number") @db.VarChar(30)
+  city            String?     @db.VarChar(100)
+  province        String?     @db.VarChar(100)
+  birthDate       DateTime?   @map("birth_date") @db.Date
+  howFoundUs      HowFoundUs? @map("how_found_us")
+  notes           String?     @db.Text
+  isActive        Boolean     @default(true) @map("is_active")
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  opportunities   Opportunity[]
+  activities      Activity[]
+  messages        Message[]
+
+  // Indexes for fast lookup in vinculacion service (Gmail & WhatsApp matching)
+  @@index([email])
+  @@index([whatsappNumber])
+  @@index([isActive])
+
+  @@map("clients")
+}
+
+// =============================================================================
+// OPPORTUNITIES
+// Sales opportunities in the pipeline.
+// =============================================================================
+
+model Opportunity {
+  id             String             @id @default(uuid()) @db.Uuid
+  clientId       String             @map("client_id") @db.Uuid
+  assignedUserId String?            @map("assigned_user_id") @db.Uuid
+  motoInterest   String?            @map("moto_interest") @db.Text
+  stage          OpportunityStage   @default(consulta)
+  result         OpportunityResult?
+  lossReason     String?            @map("loss_reason") @db.Text
+  isOpen         Boolean            @default(true) @map("is_open")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  client         Client             @relation(fields: [clientId], references: [id])
+  assignedUser   User?              @relation("AssignedOpportunities", fields: [assignedUserId], references: [id])
+  history        OpportunityHistory[]
+  activities     Activity[]
+
+  @@index([clientId])
+  @@index([assignedUserId])
+  @@index([stage])
+  @@index([isOpen])
+
+  @@map("opportunities")
+}
+
+// =============================================================================
+// OPPORTUNITY_HISTORY
+// Traceability of stage changes (RNF-08).
+// =============================================================================
+
+model OpportunityHistory {
+  id              String           @id @default(uuid()) @db.Uuid
+  opportunityId   String           @map("opportunity_id") @db.Uuid
+  changedByUserId String           @map("changed_by_user_id") @db.Uuid
+  fromStage       OpportunityStage? @map("from_stage")
+  toStage         OpportunityStage  @map("to_stage")
+  changedAt       DateTime         @default(now()) @map("changed_at") @db.Timestamptz
+
+  // Relations
+  opportunity     Opportunity      @relation(fields: [opportunityId], references: [id])
+  changedByUser   User             @relation(fields: [changedByUserId], references: [id])
+
+  @@index([opportunityId])
+
+  @@map("opportunity_history")
+}
+
+// =============================================================================
+// ACTIVITIES
+// Commercial calls, meetings, and tasks.
+// =============================================================================
+
+model Activity {
+  id                String         @id @default(uuid()) @db.Uuid
+  type              ActivityType
+  title             String         @db.VarChar(255)
+  clientId          String         @map("client_id") @db.Uuid
+  opportunityId     String?        @map("opportunity_id") @db.Uuid
+  responsibleUserId String         @map("responsible_user_id") @db.Uuid
+  scheduledAt       DateTime       @map("scheduled_at") @db.Timestamptz
+  dueAt             DateTime?      @map("due_at") @db.Timestamptz
+  status            ActivityStatus @default(pendiente)
+  summary           String?        @db.Text
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  client            Client         @relation(fields: [clientId], references: [id])
+  opportunity       Opportunity?   @relation(fields: [opportunityId], references: [id])
+  responsibleUser   User           @relation("ResponsibleUser", fields: [responsibleUserId], references: [id])
+
+  @@index([clientId])
+  @@index([opportunityId])
+  @@index([responsibleUserId])
+  @@index([status])
+  @@index([scheduledAt])
+  // Partial index equivalent: activities where status = pendiente and dueAt is not null
+  // (handled via application-level queries with filters)
+
+  @@map("activities")
+}
+
+// =============================================================================
+// MESSAGES
+// Unified communication history (Gmail + WhatsApp).
+// client_id can be NULL when message is in the general inbox (unlinked).
+// =============================================================================
+
+model Message {
+  id                  String           @id @default(uuid()) @db.Uuid
+  channel             MessageChannel
+  direction           MessageDirection
+  clientId            String?          @map("client_id") @db.Uuid
+  externalId          String           @map("external_id") @db.VarChar(255)
+  fromAddress         String           @map("from_address") @db.VarChar(255)
+  toAddress           String           @map("to_address") @db.VarChar(255)
+  subject             String?          @db.VarChar(500)
+  body                String           @db.Text
+  sentReceivedAt      DateTime         @map("sent_received_at") @db.Timestamptz
+  assignedByUserId    String?          @map("assigned_by_user_id") @db.Uuid
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  client              Client?          @relation(fields: [clientId], references: [id])
+  assignedByUser      User?            @relation("AssignedByUser", fields: [assignedByUserId], references: [id])
+
+  // Idempotency: external_id must be unique per channel
+  @@unique([channel, externalId])
+
+  // Index for vinculacion service lookups
+  @@index([channel, fromAddress])
+  // Index for client history queries
+  @@index([clientId])
+  // Index for general inbox (unlinked messages)
+  @@index([clientId, channel])
+
+  @@map("messages")
+}
+
+// =============================================================================
+// GMAIL_CREDENTIALS
+// OAuth tokens for linked Gmail accounts. Stored encrypted at rest.
+// =============================================================================
+
+model GmailCredential {
+  id                String   @id @default(uuid()) @db.Uuid
+  gmailAddress      String   @unique @map("gmail_address") @db.VarChar(255)
+  accessTokenEnc    String   @map("access_token_enc") @db.Text
+  refreshTokenEnc   String   @map("refresh_token_enc") @db.Text
+  tokenExpiry       DateTime @map("token_expiry") @db.Timestamptz
+  pubsubHistoryId   String?  @map("pubsub_history_id") @db.VarChar(100)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("gmail_credentials")
+}
+
+// =============================================================================
+// WHATSAPP_CONFIG
+// WhatsApp Business API configuration. Single record for the business account.
+// =============================================================================
+
+model WhatsappConfig {
+  id                  String   @id @default(uuid()) @db.Uuid
+  phoneNumberId       String   @map("phone_number_id") @db.VarChar(100)
+  apiTokenEnc         String   @map("api_token_enc") @db.Text
+  webhookVerifyToken  String   @map("webhook_verify_token") @db.VarChar(100)
+  isActive            Boolean  @default(true) @map("is_active")
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("whatsapp_config")
+}
