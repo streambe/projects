@@ -353,39 +353,68 @@ Al finalizar, el dev reporta al PM:
 
 ---
 
-### 5.2 QA — Testing en Preview URL
+### 5.2 QA — Plan de Tests y Ejecución
 
 **Responsable:** Tester QA
 **Skills:** `openai/develop-web-game`, `sentry/skills`, `debug-methodology`
 
-El Tester valida en la Vercel Preview URL contra los criterios de aceptación Gherkin:
+#### Fase A — Preparación (durante Sprint Planning, en paralelo con el Planning)
+
+El Tester escribe el **plan de tests completo ANTES de que empiece el desarrollo**. Por cada User Story del sprint, produce:
+
+- Test cases que cubren cada criterio de aceptación Gherkin
+- Test cases de edge cases (duplicados, campos vacíos, valores límite)
+- Test cases de regresión si hay features previas que podrían romperse
+
+Formato del plan:
+```
+TC-[ID]: [Descripción del test]
+US relacionada: US-XXX
+RF cubierto: RF-XX
+Precondición: [estado inicial del sistema]
+Pasos: [1. ..., 2. ...]
+Resultado esperado: [qué debe pasar]
+Criterio de falla: [qué indica un bug]
+```
+
+El plan se guarda en `.claude/pm-reports/tester-plan-sprint[N].md` antes del día 1 del sprint.
+
+#### Fase B — Ejecución (en paralelo con desarrollo, automática)
+
+El Tester NO espera a que todo el sprint esté completo. Trabaja en paralelo:
 
 ```
-Ejecuta tests manuales y/o automatizados en Preview URL
-  → Encuentra bug → crea reporte → dev corrige → push → QA re-testa
-  → Loop hasta: 0 bugs P1, 0 bugs P2, todos los criterios de aceptación OK
+Sprint día 1: Dev trabaja US-001         | Tester escribe plan de tests
+Sprint día 2: Dev entrega US-001         | Tester ejecuta plan de US-001
+              Dev trabaja US-002         | Tester reporta bugs de US-001
+Sprint día 3: Dev corrige bugs US-001    | Tester ejecuta plan de US-002
+              Dev entrega US-002 fix     | Tester re-valida US-001
 ```
 
-**Formato de reporte de bug:**
+**Dev antes de reportar cada tarea completada:**
+- `tsc --noEmit` → 0 errores
+- `vitest run` / `jest` → 100% passing
+- Si alguno falla → el Dev lo corrige antes de reportar al PM
+
+**El PM solo commitea cuando:**
+1. Dev confirma tests propios en verde
+2. Tester confirma 0 bugs P1/P2 para esa tarea
+
+#### Loop de bugs
+
 ```
-BUG-[ID]: [Título descriptivo]
-Severidad: P[1-4]
-URL: [Vercel preview URL]
-Steps para reproducir:
-  1. [paso 1]
-  2. [paso 2]
-Expected: [comportamiento esperado]
-Actual:   [lo que ocurre]
+Tester reporta bug → Dev corrige → Dev corre sus tests →
+Tester re-ejecuta sus tests → loop hasta 0 P1/P2
 ```
 
-**Clasificación de severidad:**
+#### Severidad de bugs
 
-| Severidad | Criterio | Bloquea el deploy |
-|-----------|----------|-------------------|
-| **P1 — Crítico** | El sistema no funciona, pérdida de datos, falla de seguridad | Sí |
-| **P2 — Alto** | Feature principal no funciona, workaround muy complejo | Sí |
-| **P3 — Medio** | Feature secundaria con problemas, workaround posible | No |
-| **P4 — Bajo** | Cosmético, mejora menor | No |
+| Severidad | Criterio | Bloquea commit |
+|-----------|----------|----------------|
+| P1 — Crítico | Sistema no funciona, pérdida de datos, falla de seguridad | Sí |
+| P2 — Alto | Feature principal rota, sin workaround | Sí |
+| P3 — Medio | Feature secundaria con problemas, workaround posible | No |
+| P4 — Bajo | Cosmético, mejora menor | No |
 
 ---
 

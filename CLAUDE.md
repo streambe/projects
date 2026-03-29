@@ -57,6 +57,26 @@ hasta recibir confirmación. No existe "una sola vuelta". El loop es la norma, n
 
 ---
 
+## MODO DE OPERACIÓN: AUTO-APPROVE
+
+GEN opera en modo autónomo. Las decisiones técnicas se toman y aprueban internamente.
+
+**GEN decide solo:**
+- Corrección de bugs y code reviews
+- Selección de librerías dentro del stack aprobado
+- Estructura interna de código
+- Resultados de testing y fix de issues
+- Estilo visual dentro de los wireframes aprobados
+
+**GEN escala al usuario SOLO para:**
+- Sprint Planning (priorización del backlog)
+- Sprint Review (validación del resultado final)
+- Cambios de scope, requerimientos o arquitectura
+- Deploy a producción
+- Bloqueos que requieren decisión de negocio
+
+---
+
 ## 1. METADATOS DEL PROYECTO
 
 ```yaml
@@ -522,16 +542,32 @@ ROLES:
   TESTER_QA:
     skills: ["openai/develop-web-game", "sentry/skills", "debug-methodology"]
     loop_especifico: |
-      Ejecuta tests en Vercel preview URL
-      Por cada bug → reporte con severidad P1-P4 → dev corrige → QA re-testa
-      Loop hasta: 0 bugs P1, 0 bugs P2, todos los criterios de aceptación OK
-    formato_bug: |
-      BUG-[ID]: [Título]
-      Severidad: P[1-4]
-      URL: [Vercel preview]
-      Steps: [pasos para reproducir]
-      Expected: [comportamiento esperado]
-      Actual: [lo que ocurre]
+      FASE A — PREPARACIÓN (se ejecuta junto con el Sprint Planning):
+        El Tester lee los criterios de aceptación Gherkin aprobados
+        Escribe el plan de tests ANTES de que el Dev empiece a codear:
+          - Test cases por cada criterio de aceptación
+          - Test cases para edge cases identificados
+          - Test cases de regresión si aplica
+        Guarda el plan en: .claude/pm-reports/tester-plan-sprint[N].md
+
+      FASE B — EJECUCIÓN (automática, en paralelo con Dev):
+        Cuando el Dev completa una tarea:
+          - Dev corre sus unit/integration tests → deben pasar al 100%
+          - Tester ejecuta su plan de tests sobre el código
+          - Si hay entorno corriendo: tests en la preview URL
+          - Si no hay entorno: revisión estática del código contra los RFs
+
+      FASE C — REPORTE:
+        Por cada bug: BUG-[ID], Severidad P1-P4, módulo, archivo, RF afectado
+        Loop hasta: 0 bugs P1, 0 bugs P2
+        MEDIUM/LOW: deuda técnica documentada
+
+    definition_of_done_por_tarea: |
+      Una tarea está Done cuando:
+        1. Dev corrió sus tests y pasaron (tsc --noEmit + vitest/jest run)
+        2. Tester ejecutó el plan de tests de esa tarea
+        3. 0 bugs P1 y P2 abiertos
+        4. PM commitea con el reporte del Tester
 
   ESPECIALISTA_SEGURIDAD:
     skills: ["trail-of-bits/skills", "guard-scanner", "benlee-skillguard", "azhua-skill-vetter"]
@@ -605,9 +641,16 @@ LOOP E – SPRINT GOAL + BACKLOG
 SPRINT EXECUTION (por cada feature)
 ─────────────────────────────────────────────────────
 
-LOOP F – DESARROLLO + QA
-  Dev implementa (con skills) → Vercel preview → QA testa →
-  Si bugs → fix → re-testa → ··· hasta criterios OK
+LOOP F — DESARROLLO + QA (en paralelo desde el día 1 del sprint):
+  Mientras Dev implementa tarea N:
+    - Tester ejecuta plan de tests de tarea N-1 (ya entregada)
+    - Dev corre sus propios tests antes de reportar al PM
+  Al recibir reporte del Dev:
+    - Tester ejecuta plan de tests de esa tarea específica
+    - Dev y Tester trabajan en paralelo — nunca secuencialmente
+  El PM solo commitea cuando:
+    - Dev: tests propios pasan
+    - Tester: 0 bugs P1/P2 para esa tarea
 
 LOOP G – CODE REVIEW
   PR abierto → Líder Técnico revisa → comenta → Dev corrige → repite → APROBADO
