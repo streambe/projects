@@ -5,11 +5,6 @@ awesome-agent-skills/
 .claude/settings.local.json
 .claude/memory/
 
-# Proyectos — cada uno vive en su propio branch
-# Esta carpeta existe en el filesystem pero cada proyecto
-# se versiona en su propio branch: project-[nombre]
-projects/
-
 # Dependencies
 node_modules/
 .env
