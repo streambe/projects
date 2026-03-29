@@ -400,6 +400,7 @@ Sprint día 3: Dev corrige bugs US-001    | Tester ejecuta plan de US-002
 1. Dev confirma tests propios en verde
 2. Tester confirma 0 bugs P1/P2 para esa tarea
 3. Lider Tecnico completo code review y dio APROBADO (ver seccion 5.3)
+4. Especialista en Seguridad completo auditoría con veredicto GO (ver seccion 5.4)
 
 #### Loop de bugs
 
@@ -429,7 +430,8 @@ Tester re-ejecuta sus tests → loop hasta 0 P1/P2
 **Flujo obligatorio por tarea:**
 ```
 Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
-Líder Técnico hace code review → Solo cuando QA OK + Review OK → PM commitea
+Líder Técnico hace code review → Especialista en Seguridad audita →
+Solo cuando QA OK + Review OK + Security OK → PM commitea
 ```
 
 **Criterios de review (checklist obligatoria):**
@@ -451,21 +453,50 @@ Líder Técnico revisa:
 
 ---
 
-### 5.4 Auditoría de Seguridad
+### 5.4 Auditoría de Seguridad (OBLIGATORIA en cada sprint)
 
 **Responsable:** Especialista en Seguridad
 **Skills:** `trail-of-bits/skills`, `guard-scanner`, `grc-agent-soc2-quality-review`
 
-Se activa para features críticas: autenticación, pagos, datos sensibles, APIs públicas.
+La auditoría de seguridad es **OBLIGATORIA en cada sprint**, no solo para features críticas. Es un gate que debe completarse antes del Sprint Review.
 
+**Flujo obligatorio por tarea/sprint:**
 ```
-Auditoría de seguridad de la feature
-  → Reporte con hallazgos clasificados CRITICAL / HIGH / MEDIUM / LOW
+Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
+Líder Técnico hace code review → Especialista en Seguridad audita →
+Solo cuando QA OK + Review OK + Security OK → PM commitea
+```
+
+**Loop de auditoría:**
+```
+Auditoría de seguridad del sprint completo
+  → Reporte .docx con hallazgos clasificados CRITICAL / HIGH / MEDIUM / LOW
   → Dev corrige todos los CRITICAL y HIGH
   → Especialista re-audita
   → Loop hasta: 0 CRITICAL, 0 HIGH
   → MEDIUM y LOW: documentados como deuda técnica con plan de remediación
+  → Veredicto GO/NO-GO: solo GO permite avanzar al Sprint Review
 ```
+
+**Entregable obligatorio: documento Word (.docx)**
+
+Ubicación: `.claude/pm-reports/security-audit-sprint[N].docx`
+
+El documento debe incluir:
+1. **Resumen ejecutivo** — scope, veredicto, resumen de hallazgos por severidad
+2. **Lista de pruebas ejecutadas** — ID, categoría (OWASP, auth, input validation, etc.), descripción, resultado (PASS/FAIL), evidencia, severidad si es FAIL
+3. **Vulnerabilidades encontradas** — severidad CRITICAL/HIGH/MEDIUM/LOW, descripción, ubicación, PoC, impacto, remediación
+4. **Recomendaciones** — mejoras y plan de remediación para MEDIUM/LOW
+5. **Veredicto: GO / NO-GO** — GO solo si 0 CRITICAL y 0 HIGH abiertos
+
+**Criterios de auditoría obligatorios:**
+- OWASP Top 10 (injection, XSS, CSRF, broken auth, broken access control, etc.)
+- Secrets hardcodeados en código (API keys, passwords, tokens)
+- Validación y sanitización de inputs en todos los endpoints
+- Autenticación y autorización correctas (IDOR, roles, permisos)
+- Rate limiting en endpoints públicos
+- Headers de seguridad (CORS, CSP, X-Frame-Options, HSTS)
+- Dependencias con vulnerabilidades conocidas (npm audit o equivalente)
 
 ---
 
@@ -496,6 +527,7 @@ Demostración de cada feature del sprint
 ```
 
 **Ningún deploy a producción ocurre sin la aprobación del Sprint Review.**
+**Ningún Sprint Review se inicia sin la auditoría de seguridad completada con veredicto GO.**
 
 ---
 
@@ -544,6 +576,7 @@ El PM identifica siempre tareas sin dependencias mutuas para ejecutarlas en simu
 | CP-08 | Deploy a producción | PM | Sí — requiere CP-06 |
 | CP-09 | Features de seguridad y pagos | Especialista en Seguridad | Sí |
 | CP-10 | Skills externas no verificadas | Seguridad + Usuario | Sí — obligatorio antes de usar |
+| CP-11 | Auditoría de seguridad del sprint (OBLIGATORIA) | Especialista en Seguridad | Sí — veredicto GO antes de Sprint Review. Entregable: .docx |
 
 ---
 
@@ -641,9 +674,9 @@ hotfix(scope): descripción  → fix urgente en producción
 │  QA testa en preview → BUG P1/P2 → dev corrige → QA re-testa        │
 │       ↓  (0 P1, 0 P2)                                               │
 │  Líder Técnico code review (BLOQUEANTE) → comenta → dev corrige     │
-│       ↓  (Review APROBADO → PM commitea)                             │
-│       ↓  (si feature crítica)                                       │
-│  Seguridad audita → CRITICAL/HIGH → dev corrige → re-audita         │
+│       ↓  (Review APROBADO)                                           │
+│  Seguridad audita (OBLIGATORIO) → CRITICAL/HIGH → dev corrige       │
+│       ↓  (Veredicto GO → PM commitea)                                │
 │       ↓                                                             │
 │  Merge a develop → staging automático                               │
 │       ↓                                                             │

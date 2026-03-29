@@ -573,14 +573,31 @@ ROLES:
         2. Tester ejecutó el plan de tests de esa tarea
         3. 0 bugs P1 y P2 abiertos
         4. Líder Técnico completó code review y dio APROBADO
-        5. PM commitea con el reporte del Tester + aprobación del Líder Técnico
+        5. Especialista en Seguridad completó auditoría con veredicto GO
+        6. PM commitea con el reporte del Tester + aprobación del Líder Técnico + audit de Seguridad
 
   ESPECIALISTA_SEGURIDAD:
     skills: ["trail-of-bits/skills", "guard-scanner", "benlee-skillguard", "azhua-skill-vetter"]
     loop_especifico: |
-      Audita feature → reporte con severidades (CRITICAL/HIGH/MEDIUM/LOW)
+      OBLIGATORIO en CADA sprint/proyecto — no solo en features críticas.
+      Audita TODO el código del sprint → genera reporte .docx con:
+        - Resumen ejecutivo
+        - Lista de pruebas ejecutadas (ID, categoría, descripción, resultado, evidencia, severidad)
+        - Vulnerabilidades encontradas con severidad CRITICAL/HIGH/MEDIUM/LOW
+        - Recomendaciones
+        - Veredicto: GO / NO-GO
       Dev corrige CRITICAL y HIGH → Seguridad re-audita → loop hasta sin CRITICAL/HIGH
       MEDIUM/LOW: documentar como deuda técnica con plan de remediación
+      Entregable: .claude/pm-reports/security-audit-sprint[N].docx
+      Criterios de auditoría obligatorios:
+        - OWASP Top 10 (injection, XSS, CSRF, broken auth, etc.)
+        - Secrets hardcodeados en código
+        - Validación y sanitización de inputs en todos los endpoints
+        - Autenticación y autorización correctas
+        - Rate limiting en endpoints públicos
+        - Headers de seguridad (CORS, CSP, etc.)
+        - Dependencias con vulnerabilidades conocidas (npm audit)
+      La auditoría debe estar completa ANTES del Sprint Review.
     responsabilidad_especial: |
       ANTES de que cualquier agente use una skill externa nueva:
       1. Correr benlee-skillguard sobre el SKILL.md
@@ -665,9 +682,13 @@ LOOP G – CODE REVIEW (BLOQUEANTE — gate obligatorio antes de commit)
     1. Dev: tests propios pasan
     2. Tester: 0 bugs P1/P2 para esa tarea
     3. Líder Técnico: code review APROBADO
+    4. Especialista en Seguridad: auditoría completa con veredicto GO
 
-LOOP H – SEGURIDAD (si feature crítica)
-  Auditoría → Vulnerabilidades → Dev corrige → Re-audita → ··· → APROBADO
+LOOP H – SEGURIDAD (OBLIGATORIO en cada sprint — no solo features críticas)
+  Auditoría completa del sprint → Reporte .docx con todas las pruebas y resultados
+  → Veredicto GO/NO-GO → Si hay CRITICAL/HIGH → Dev corrige → Re-audita → loop
+  → Solo con veredicto GO → Sprint puede avanzar a Review
+  Entregable: .claude/pm-reports/security-audit-sprint[N].docx
 
 SPRINT REVIEW
 ─────────────────────────────────────────────────────
@@ -924,13 +945,14 @@ PR_CHECKLIST:
   - QA validó en Vercel preview URL
   - Skills utilizados documentados en descripción del PR
   - Code review aprobado por Líder Técnico (BLOQUEANTE — sin esto no se commitea)
-  - Aprobado por Seguridad (si feature crítica)
+  - Auditoría de seguridad completada con veredicto GO (OBLIGATORIO — sin esto no se commitea)
 
 CODE_REVIEW_OBLIGATORIO:
   regla: "Ningún commit se realiza sin code review aprobado del Líder Técnico"
   flujo_por_tarea: |
     Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
-    Líder Técnico hace code review → Solo cuando QA OK + Review OK → PM commitea
+    Líder Técnico hace code review → Especialista en Seguridad audita →
+    Solo cuando QA OK + Review OK + Security OK → PM commitea
   criterios_review:
     - Adherencia al stack y estándares aprobados
     - Sin secrets hardcodeados
@@ -968,8 +990,11 @@ SEGURIDAD_BASICA:
 ✅ CP-08: Deploy a producción
 ✅ CP-09: Features de seguridad/pagos
 ✅ CP-10: Skills externas no verificadas → Seguridad + usuario aprueban
+✅ CP-11: Auditoría de seguridad del sprint (OBLIGATORIA) → veredicto GO antes de Sprint Review
+          Entregable: .claude/pm-reports/security-audit-sprint[N].docx
 
 TODOS los checkpoints son loops. Ninguno se salta. El PM gestiona cada uno.
+La auditoría de seguridad (CP-11) es obligatoria en CADA sprint, sin excepciones.
 ```
 
 ---
