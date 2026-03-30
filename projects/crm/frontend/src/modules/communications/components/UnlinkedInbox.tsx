@@ -17,7 +17,7 @@ interface LinkModalProps {
 
 function LinkModal({ message, onClose }: LinkModalProps) {
   const [clientId, setClientId] = useState('');
-  const { data: clientsData, isLoading } = useClientsList({ limit: 200 });
+  const { data: clientsData, isLoading } = useClientsList({ limit: 100 });
   const linkMessage = useLinkMessage();
 
   async function handleLink() {

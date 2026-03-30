@@ -49,7 +49,7 @@ export function NewOpportunityDialog({ onClose }: NewOpportunityDialogProps) {
   const [motoInterest, setMotoInterest] = useState('');
 
   // -- hooks
-  const { data: clientsData, isLoading: clientsLoading } = useClientsList({ limit: 200 });
+  const { data: clientsData, isLoading: clientsLoading } = useClientsList({ limit: 100 });
   const createClient = useCreateClient();
   const createOpportunity = useCreateOpportunity();
 

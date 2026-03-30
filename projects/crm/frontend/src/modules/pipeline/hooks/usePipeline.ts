@@ -31,7 +31,7 @@ export function usePipelineOpportunities(params: UsePipelineParams = {}) {
     queryKey: pipelineQueryKeys.list(params as Record<string, unknown>),
     queryFn: async () => {
       const { data } = await api.get<OpportunitiesListResponse>('/opportunities', {
-        params: { ...params, limit: 200 },
+        params: { ...params, limit: 100 },
       });
       // The API returns lastActivityAt on each opportunity (RF-11)
       return data;

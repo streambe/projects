@@ -44,7 +44,7 @@ export function useChannelMessages(channel: CommChannel) {
     queryKey: commQueryKeys.byChannel(channel),
     queryFn: async () => {
       const { data } = await api.get<MessagesListResponse>('/communications', {
-        params: { channel, limit: 200 },
+        params: { channel, limit: 100 },
       });
       return data;
     },

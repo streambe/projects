@@ -42,7 +42,7 @@ export function useActivitiesList(params: UseActivitiesListParams = {}) {
     queryKey: activityQueryKeys.list(params as Record<string, unknown>),
     queryFn: async () => {
       const { data } = await api.get<ActivitiesListResponse>('/activities', {
-        params: { ...params, limit: params.limit ?? 200 },
+        params: { ...params, limit: params.limit ?? 100 },
       });
       return data;
     },
