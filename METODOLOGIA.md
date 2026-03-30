@@ -1,7 +1,7 @@
 # Metodología de Desarrollo Multi-Agente
 
 > **Sistema de desarrollo iterativo con aprobación continua.**
-> Combina Scrum + PMI con un equipo de 15 agentes especializados, cada uno con skills del repositorio VoltAgent.
+> Combina Scrum + PMI con un equipo de 16 agentes especializados, cada uno con skills del repositorio VoltAgent.
 > Principio rector: ningún entregable avanza sin aprobación explícita del usuario.
 
 ---
@@ -26,11 +26,12 @@
 
 ## 1. El Equipo
 
-El equipo está compuesto por 15 agentes especializados. Cada uno opera bajo su propio loop iterativo y reporta al PM al finalizar cada tarea.
+El equipo está compuesto por 16 agentes especializados. Cada uno opera bajo su propio loop iterativo y reporta al PM al finalizar cada tarea.
 
 | Agente | Rol | Skills Principales |
 |--------|-----|--------------------|
 | **Project Manager** | Coordina el equipo, gestiona todos los loops de aprobación, actualiza el estado del proyecto | cairn-cli, agent-team-orchestration |
+| **Product Owner** | Voz del usuario, prioriza backlog por valor de negocio, valida features contra expectativas, define QUE se construye | muratcankoylan/context-fundamentals, agent-team-orchestration |
 | **Analista Funcional** | Elicita requerimientos, escribe User Stories con criterios Gherkin | muratcankoylan/context-fundamentals |
 | **Arquitecto de Software** | Define arquitectura, documenta ADRs, evalúa trade-offs | voltagent/voltagent-best-practices, database-designer |
 | **Líder Técnico** | Define estándares, conduce code reviews, aprueba PRs | mcollina/skills, debug-methodology |
@@ -298,7 +299,8 @@ lint → type-check → test → build → preview-deploy → [aprobación] → 
 ### Sprint Goal
 
 ```
-PM propone un objetivo claro y medible para el sprint
+PO define prioridades basadas en valor de negocio
+  → PM propone un objetivo claro y medible para el sprint
   → Usuario ajusta
   → Itera hasta APROBADO
 ```
@@ -306,9 +308,9 @@ PM propone un objetivo claro y medible para el sprint
 ### Backlog Priorizado
 
 ```
-PM presenta las stories ordenadas por prioridad y valor
-  → Usuario reordena según su criterio de negocio
-  → PM ajusta estimaciones y dependencias
+PO prioriza las stories por valor de negocio (decide QUE se construye)
+  → PM presenta el backlog ordenado con estimaciones y dependencias (define COMO y CUANDO)
+  → Usuario reordena según su criterio
   → Itera hasta APROBADO
 ```
 
@@ -568,20 +570,21 @@ Deploy ejecutado → Cloud/DevOps validan checklist →
 
 ## 6. Fase 4 — Sprint Review
 
-**Responsable:** Project Manager + Todo el equipo
+**Responsable:** Project Manager + Product Owner + Todo el equipo
 
 Demo formal de todas las features del sprint en el entorno de staging.
 
 ```
 Demostración de cada feature del sprint
+  → PO valida cada feature contra expectativas del producto y criterios de valor
   → Usuario valida feature por feature:
        Aceptada  → queda en staging, lista para producción
-       Rechazada → vuelve al backlog con feedback explícito
+       Rechazada → vuelve al backlog con feedback del PO y del usuario
   → Sprint APROBADO → PR a main → deploy a producción
 ```
 
 **Ningún deploy a producción ocurre sin la aprobación del Sprint Review.**
-**Ningún Sprint Review se inicia sin la auditoría de seguridad completada con veredicto GO.**
+**Ningún Sprint Review se inicia sin la validación del PO y la auditoría de seguridad completada con veredicto GO.**
 
 ---
 
@@ -631,6 +634,7 @@ El PM identifica siempre tareas sin dependencias mutuas para ejecutarlas en simu
 | CP-09 | Features de seguridad y pagos | Especialista en Seguridad | Sí |
 | CP-10 | Skills externas no verificadas | Seguridad + Usuario | Sí — obligatorio antes de usar |
 | CP-11 | Auditoría de seguridad del sprint (OBLIGATORIA) | Especialista en Seguridad | Sí — veredicto GO antes de Sprint Review. Entregable: .docx |
+| CP-12 | Product Owner valida features antes del Sprint Review | Product Owner | Sí — PO acepta/rechaza contra expectativas del producto |
 
 ---
 
@@ -713,8 +717,9 @@ hotfix(scope): descripción  → fix urgente en producción
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        SPRINT PLANNING                              │
 │                                                                     │
-│  Sprint Goal: propone → ajusta → ... → APROBADO                     │
-│  Backlog: presenta → reordena → ajusta → ... → APROBADO             │
+│  PO prioriza por valor de negocio (QUE construir)                    │
+│  Sprint Goal: PM propone → ajusta → ... → APROBADO                   │
+│  Backlog: PO prioriza → PM presenta → reordena → ... → APROBADO     │
 └────────────────────────────┬────────────────────────────────────────┘
                              │
                              ▼
@@ -745,9 +750,10 @@ hotfix(scope): descripción  → fix urgente en producción
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        SPRINT REVIEW                                │
 │                                                                     │
+│  PO valida features contra expectativas del producto                 │
 │  Demo de cada feature → usuario valida                              │
 │  Aceptada → merge a main → deploy a producción                      │
-│  Rechazada → vuelve al backlog con feedback                         │
+│  Rechazada → vuelve al backlog con feedback del PO                  │
 └────────────────────────────┬────────────────────────────────────────┘
                              │
                              ▼
@@ -779,6 +785,7 @@ Cuando el PM lo indique (típicamente al cierre de sprint o del proyecto), cada 
 | `data-architecture.md` | Ingeniero de Datos | Diagrama de base de datos / DER, ETL si aplica, modelo de datos |
 | `infrastructure-deployment.md` | Ingeniero Cloud + DevOps | Arquitectura cloud, diagrama de despliegue, componentes de infraestructura, pipelines CI/CD, detalles de implementacion |
 | `test-report.md` | Tester QA | Casos de prueba completos, ejecucion y resultados, criterios de aceptacion, bugs encontrados y resolucion |
+| `product-vision.md` | Product Owner | Vision del producto, user personas, value proposition, product goals, roadmap de alto nivel, criterios de exito |
 
 ### Momento de generacion
 
@@ -803,7 +810,7 @@ Repositorio Git
 │
 ├── branch: gen  ──────────────────────────────────────────────────────
 │   │  Framework GEN — evoluciona independientemente de los proyectos
-│   ├── .claude/agents/       ← 15 agentes (requerido en root por Claude Code)
+│   ├── .claude/agents/       ← 16 agentes (requerido en root por Claude Code)
 │   ├── CLAUDE.md             ← Configuración maestra del equipo
 │   ├── METODOLOGIA.md        ← Este archivo
 │   ├── .gitignore

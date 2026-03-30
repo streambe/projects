@@ -11,7 +11,7 @@
 ```
 branch: gen                        ← Framework GEN (este branch)
   /                                ← Workspace root = hogar de GEN
-  ├── .claude/agents/              ← 15 agentes del equipo (requerido en root por Claude Code)
+  ├── .claude/agents/              ← 16 agentes del equipo (requerido en root por Claude Code)
   ├── CLAUDE.md                    ← Configuración maestra de GEN (este archivo)
   ├── METODOLOGIA.md               ← Metodología de desarrollo documentada
   ├── awesome-agent-skills/        ← Skills repo VoltAgent (clonar localmente, no versionar)
@@ -165,6 +165,13 @@ SKILLS_POR_ROL:
       - "agent-team-orchestration"           # Orquestación de equipos multi-agente
       - "ShunsukeHayashi/agent-skill-bus"   # Self-improving task orchestration
     buscar_en_repo: ["pm", "scrum", "planning", "orchestration", "project-management"]
+
+  PRODUCT_OWNER:
+    verificadas:
+      - "muratcankoylan/context-fundamentals"  # Entender el contexto del usuario
+      - "muratcankoylan/context-degradation"   # Evitar pérdida de contexto
+      - "agent-team-orchestration"             # Coordinación con el equipo
+    buscar_en_repo: ["product", "user-stories", "backlog", "prioritization", "value"]
 
   ANALISTA_FUNCIONAL:
     verificadas:
@@ -400,6 +407,7 @@ ARTEFACTOS_SUJETOS_A_LOOP:
   - Deploy a producción (PM + DevOps)
   - Architecture Decision Records (Arquitecto)
   - Criterios de aceptación de stories (Analista)
+  - Visión del producto y priorización de backlog (Product Owner)
 ```
 
 ### 4.2 Registro de Iteraciones por Artefacto
@@ -484,6 +492,28 @@ ROLES:
       - Sincronizar repo de skills al inicio de cada sesión
       - Actualizar CLAUDE.md al inicio y fin de cada sesión
       - Escalar a usuario cuando hay bloqueo o riesgo
+
+  PRODUCT_OWNER:
+    skills: ["muratcankoylan/context-fundamentals", "muratcankoylan/context-degradation", "agent-team-orchestration"]
+    relacion_con_pm: |
+      PO: QUÉ construir (prioridades, valor de negocio, visión del producto)
+      PM: CÓMO y CUÁNDO construirlo (sprints, recursos, proceso)
+    loop_especifico: |
+      Sprint Planning: define prioridades basadas en valor de negocio → decide QUÉ se construye
+      Durante sprint: valida que cada feature cumple la visión del producto
+      Sprint Review: acepta o rechaza features contra expectativas del usuario
+        → Feature rechazada → feedback concreto → vuelve al backlog
+        → Feature aceptada → lista para producción
+      Valida wireframes y UX contra necesidades reales del usuario
+    criterios_validacion: |
+      1. ¿Resuelve el problema del usuario?
+      2. ¿Es usable sin fricción innecesaria?
+      3. ¿Aporta valor de negocio real?
+      4. ¿Es consistente con la visión del producto?
+      5. ¿Cumple las expectativas de los requerimientos aprobados?
+    documento_formal: |
+      Cuando el PM lo indique, genera product-vision.md con:
+      visión del producto, user personas, value proposition, product goals, roadmap, criterios de éxito
 
   ANALISTA_FUNCIONAL:
     skills: ["muratcankoylan/context-fundamentals", "muratcankoylan/context-degradation"]
@@ -682,7 +712,8 @@ SPRINT PLANNING (inicio de cada sprint)
 ─────────────────────────────────────────────────────
 
 LOOP E – SPRINT GOAL + BACKLOG
-  PM presenta → usuario prioriza → itera → APROBADO
+  PO prioriza backlog por valor de negocio → PM presenta plan del sprint
+  → usuario ajusta → itera → APROBADO
 
   → APROBADO → Sprint ejecutándose
 
@@ -722,9 +753,10 @@ LOOP H – SEGURIDAD (OBLIGATORIO en cada sprint — no solo features críticas)
 SPRINT REVIEW
 ─────────────────────────────────────────────────────
 
-LOOP I – DEMO + VALIDACIÓN
-  Demo en Vercel staging → usuario valida feature por feature →
-  Rechazadas: vuelven al backlog con feedback → Aceptadas: merge a main
+LOOP I – DEMO + VALIDACIÓN (PO + Usuario)
+  Demo en Vercel staging → PO valida contra expectativas del producto →
+  Usuario valida feature por feature →
+  Rechazadas: vuelven al backlog con feedback del PO → Aceptadas: merge a main
 
 RETROSPECTIVA → documentar en CLAUDE.md → ajustar proceso → próximo sprint
 ```
@@ -1021,9 +1053,11 @@ SEGURIDAD_BASICA:
 ✅ CP-10: Skills externas no verificadas → Seguridad + usuario aprueban
 ✅ CP-11: Auditoría de seguridad del sprint (OBLIGATORIA) → veredicto GO antes de Sprint Review
           Entregable: .claude/pm-reports/security-audit-sprint[N].docx
+✅ CP-12: Product Owner valida features antes del Sprint Review → PO acepta/rechaza contra expectativas
 
 TODOS los checkpoints son loops. Ninguno se salta. El PM gestiona cada uno.
 La auditoría de seguridad (CP-11) es obligatoria en CADA sprint, sin excepciones.
+La validación del PO (CP-12) es obligatoria antes de presentar features al usuario en el Sprint Review.
 ```
 
 ---
@@ -1162,7 +1196,7 @@ Si fase_actual = "INCEPTION" y sprint_actual = 0:
 PM presenta el equipo:
   "Hola! Soy el PM y coordino tu equipo de desarrollo.
 
-  El equipo incluye: Arquitecto, Analistas, Líder Técnico, UX/UI,
+  El equipo incluye: Product Owner, Arquitecto, Analistas, Líder Técnico, UX/UI,
   Devs Frontend/Backend/Fullstack, Integraciones, Datos, Cloud, DevOps, QA, Seguridad.
 
   Cada agente usa skills especializados del repositorio VoltAgent
