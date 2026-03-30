@@ -394,13 +394,28 @@ Sprint día 3: Dev corrige bugs US-001    | Tester ejecuta plan de US-002
 **Dev antes de reportar cada tarea completada:**
 - `tsc --noEmit` → 0 errores
 - `vitest run` / `jest` → 100% passing
+- Dev Backend: tests unitarios OBLIGATORIOS por cada servicio/endpoint (happy path + validacion de inputs + errores esperados)
 - Si alguno falla → el Dev lo corrige antes de reportar al PM
 
+**Integrador despues de QA:**
+- Ejecuta tests e2e con Playwright (o similar) sobre flujos completos que cruzan modulos
+- Valida que las integraciones entre modulos funcionen correctamente (frontend <-> backend <-> DB <-> servicios externos)
+- NO puede reportar OK sin tests e2e pasando
+
+**Cloud/DevOps despues de deploy:**
+- Verifican que el deploy fue exitoso
+- Validan que los servicios responden correctamente en el entorno cloud
+- Confirman conectividad entre servicios (frontend <-> backend <-> DB)
+- Health checks funcionando en todos los entornos desplegados
+- Revisan logs en busca de errores post-deploy
+
 **El PM solo commitea cuando se cumplen TODAS estas condiciones:**
-1. Dev confirma tests propios en verde
+1. Dev confirma tests propios en verde (incluyendo tests unitarios del backend)
 2. Tester confirma 0 bugs P1/P2 para esa tarea
-3. Lider Tecnico completo code review y dio APROBADO (ver seccion 5.3)
-4. Especialista en Seguridad completo auditoría con veredicto GO (ver seccion 5.4)
+3. Integrador confirma tests e2e pasando sobre flujos integrados
+4. Lider Tecnico completo code review y dio APROBADO (ver seccion 5.3)
+5. Especialista en Seguridad completo auditoria con veredicto GO (ver seccion 5.4)
+6. Cloud/DevOps confirman validacion post-deploy exitosa (ver seccion 5.6)
 
 #### Loop de bugs
 
@@ -429,9 +444,11 @@ Tester re-ejecuta sus tests → loop hasta 0 P1/P2
 
 **Flujo obligatorio por tarea:**
 ```
-Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
+Dev implementa + escribe tests unitarios → Dev pasa sus tests →
+Tester ejecuta QA → Integrador ejecuta e2e →
 Líder Técnico hace code review → Especialista en Seguridad audita →
-Solo cuando QA OK + Review OK + Security OK → PM commitea
+Cloud/DevOps validan deploy →
+Solo cuando QA OK + e2e OK + Review OK + Security OK + Deploy OK → PM commitea
 ```
 
 **Criterios de review (checklist obligatoria):**
@@ -462,9 +479,11 @@ La auditoría de seguridad es **OBLIGATORIA en cada sprint**, no solo para featu
 
 **Flujo obligatorio por tarea/sprint:**
 ```
-Dev implementa → Dev pasa sus tests → Tester ejecuta QA →
+Dev implementa + escribe tests unitarios → Dev pasa sus tests →
+Tester ejecuta QA → Integrador ejecuta e2e →
 Líder Técnico hace code review → Especialista en Seguridad audita →
-Solo cuando QA OK + Review OK + Security OK → PM commitea
+Cloud/DevOps validan deploy →
+Solo cuando QA OK + e2e OK + Review OK + Security OK + Deploy OK → PM commitea
 ```
 
 **Loop de auditoría:**
@@ -509,6 +528,39 @@ Merge a develop → deploy automático en Vercel (staging)
   → Loop hasta APROBADO
   → PR a main listo para producción
 ```
+
+---
+
+### 5.6 Validación Post-Deploy (OBLIGATORIA — Cloud Engineer + DevOps)
+
+**Responsables:** Ingeniero Cloud + DevOps
+
+Cada vez que se realiza un deploy (a staging o produccion), Cloud y DevOps DEBEN validar que la implementacion funciona correctamente en el entorno desplegado.
+
+**Checklist obligatoria post-deploy:**
+```
+1. Verificar que el deploy fue exitoso (pipeline CI/CD sin errores)
+2. Validar que los servicios responden correctamente:
+   - Frontend carga sin errores
+   - Backend responde a requests (health check endpoint)
+   - Base de datos accesible y respondiendo queries
+3. Confirmar conectividad entre servicios:
+   - Frontend <-> Backend (API calls funcionando)
+   - Backend <-> Base de datos (queries ejecutandose)
+   - Backend <-> Servicios externos (integraciones respondiendo)
+4. Health checks funcionando en todos los servicios
+5. Revisar logs en busca de errores o warnings criticos
+6. Validar variables de entorno y secrets configurados correctamente
+```
+
+**Loop de validacion:**
+```
+Deploy ejecutado → Cloud/DevOps validan checklist →
+  Si hay fallos → diagnosticar y corregir → re-deploy → re-validar →
+  Loop hasta que todo pase → reportar al PM
+```
+
+> **REGLA:** Ningun deploy se reporta como exitoso sin esta validacion completa. Es un gate obligatorio antes de que el PM pueda commitear.
 
 ---
 
@@ -669,14 +721,18 @@ hotfix(scope): descripción  → fix urgente en producción
 │                                                                     │
 │  Por cada feature:                                                  │
 │                                                                     │
-│  Dev implementa → branch → Vercel Preview URL automática            │
+│  Dev implementa + tests unitarios → branch → Vercel Preview URL     │
 │       ↓                                                             │
 │  QA testa en preview → BUG P1/P2 → dev corrige → QA re-testa        │
 │       ↓  (0 P1, 0 P2)                                               │
+│  Integrador ejecuta e2e (Playwright) sobre flujos integrados         │
+│       ↓  (e2e OK)                                                    │
 │  Líder Técnico code review (BLOQUEANTE) → comenta → dev corrige     │
 │       ↓  (Review APROBADO)                                           │
 │  Seguridad audita (OBLIGATORIO) → CRITICAL/HIGH → dev corrige       │
-│       ↓  (Veredicto GO → PM commitea)                                │
+│       ↓  (Veredicto GO)                                              │
+│  Cloud/DevOps validan deploy (health checks, conectividad, logs)     │
+│       ↓  (Deploy OK → PM commitea)                                   │
 │       ↓                                                             │
 │  Merge a develop → staging automático                               │
 │       ↓                                                             │

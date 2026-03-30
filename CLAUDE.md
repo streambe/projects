@@ -535,7 +535,11 @@ ROLES:
   DEV_BACKEND:
     skills: ["mcollina/skills", "database-designer"]
     loop_especifico: |
-      Implementa endpoint → QA testa → si bugs → fix → repite
+      Implementa endpoint/servicio + escribe tests unitarios OBLIGATORIOS
+      Tests unitarios deben cubrir: happy path, validación de inputs, errores esperados
+      Framework: vitest o jest (según stack aprobado)
+      NO puede reportar tarea como completada sin tests unitarios pasando
+      → QA testa → si bugs → fix → repite
       Líder Técnico code review → loop hasta APROBADO
 
   ESPECIALISTA_INTEGRACIONES:
@@ -543,6 +547,11 @@ ROLES:
     loop_especifico: |
       Implementa integración → muestra en preview → usuario valida comportamiento
       Si hay diferencias con lo esperado → ajusta → repite
+      Tests e2e OBLIGATORIOS con Playwright (o similar) sobre flujos integrados:
+        - Testea flujos completos que cruzan módulos (frontend → backend → DB → servicios externos)
+        - Valida que las integraciones entre módulos funcionen correctamente
+        - Es parte del gate de calidad antes del commit
+      NO puede reportar tarea como completada sin tests e2e pasando
 
   TESTER_QA:
     skills: ["openai/develop-web-game", "sentry/skills", "debug-methodology"]
@@ -570,11 +579,14 @@ ROLES:
     definition_of_done_por_tarea: |
       Una tarea está Done cuando:
         1. Dev corrió sus tests y pasaron (tsc --noEmit + vitest/jest run)
-        2. Tester ejecutó el plan de tests de esa tarea
-        3. 0 bugs P1 y P2 abiertos
-        4. Líder Técnico completó code review y dio APROBADO
-        5. Especialista en Seguridad completó auditoría con veredicto GO
-        6. PM commitea con el reporte del Tester + aprobación del Líder Técnico + audit de Seguridad
+        2. Dev Backend entregó tests unitarios pasando (happy path + validación + errores)
+        3. Tester ejecutó el plan de tests de esa tarea
+        4. 0 bugs P1 y P2 abiertos
+        5. Integrador ejecutó tests e2e sobre flujos integrados (Playwright) y pasaron
+        6. Líder Técnico completó code review y dio APROBADO
+        7. Especialista en Seguridad completó auditoría con veredicto GO
+        8. Cloud/DevOps validaron deploy (servicios respondiendo, health checks OK, conectividad OK)
+        9. PM commitea con el reporte del Tester + aprobación del Líder Técnico + audit de Seguridad + validación deploy
 
   ESPECIALISTA_SEGURIDAD:
     skills: ["trail-of-bits/skills", "guard-scanner", "benlee-skillguard", "azhua-skill-vetter"]
@@ -619,12 +631,25 @@ ROLES:
       Propone arquitectura infra con costos estimados
       → usuario aprueba presupuesto → implementa
       → muestra métricas y costos reales → usuario valida
+      Validación post-deploy OBLIGATORIA:
+        - Verificar que el deploy fue exitoso
+        - Validar que los servicios responden correctamente en el entorno cloud
+        - Confirmar conectividad entre servicios (frontend <-> backend <-> DB)
+        - Health checks funcionando
+      NO puede reportar tarea como completada sin validación post-deploy exitosa
 
   DEVOPS:
     skills: ["openai/gh-fix-ci", "openai/gh-address-comments"]
     loop_especifico: |
       Draft pipeline CI/CD → Líder Técnico revisa → usuario aprueba flujo
       → implementa → prueba en PR real → ajusta si hay issues
+      Validación post-deploy OBLIGATORIA:
+        - Verificar que el pipeline CI/CD ejecutó correctamente
+        - Validar que los servicios están activos y respondiendo
+        - Revisar logs en busca de errores post-deploy
+        - Confirmar conectividad entre servicios (frontend <-> backend <-> DB)
+        - Health checks funcionando en todos los entornos desplegados
+      NO puede reportar deploy como exitoso sin validación post-deploy completa
     pipeline_minimo: |
       lint → test → build → preview-deploy (Vercel) → [aprobación] → prod-deploy
 ```
@@ -666,12 +691,14 @@ SPRINT EXECUTION (por cada feature)
 
 LOOP F — DESARROLLO + QA (en paralelo desde el día 1 del sprint):
   Mientras Dev implementa tarea N:
+    - Dev Backend escribe tests unitarios OBLIGATORIOS (happy path + validación + errores)
     - Tester ejecuta plan de tests de tarea N-1 (ya entregada)
     - Dev corre sus propios tests antes de reportar al PM
   Al recibir reporte del Dev:
     - Tester ejecuta plan de tests de esa tarea específica
+    - Integrador ejecuta tests e2e (Playwright) sobre flujos que cruzan módulos
     - Dev y Tester trabajan en paralelo — nunca secuencialmente
-  Cuando QA OK (0 bugs P1/P2):
+  Cuando QA OK (0 bugs P1/P2) + e2e OK:
     - Líder Técnico hace code review (LOOP G — BLOQUEANTE)
 
 LOOP G – CODE REVIEW (BLOQUEANTE — gate obligatorio antes de commit)
@@ -679,10 +706,12 @@ LOOP G – CODE REVIEW (BLOQUEANTE — gate obligatorio antes de commit)
   REGLA: Ningún commit se realiza sin code review aprobado del Líder Técnico.
 
   El PM solo commitea cuando se cumplen TODAS estas condiciones:
-    1. Dev: tests propios pasan
+    1. Dev: tests propios pasan (incluyendo tests unitarios del backend)
     2. Tester: 0 bugs P1/P2 para esa tarea
-    3. Líder Técnico: code review APROBADO
-    4. Especialista en Seguridad: auditoría completa con veredicto GO
+    3. Integrador: tests e2e sobre flujos integrados pasando
+    4. Líder Técnico: code review APROBADO
+    5. Especialista en Seguridad: auditoría completa con veredicto GO
+    6. Cloud/DevOps: validación post-deploy exitosa (servicios, health checks, conectividad)
 
 LOOP H – SEGURIDAD (OBLIGATORIO en cada sprint — no solo features críticas)
   Auditoría completa del sprint → Reporte .docx con todas las pruebas y resultados

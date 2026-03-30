@@ -1,24 +1,40 @@
-# Reporte: Code Review obligatorio como gate antes de commit
+# Reporte: Incorporacion de 3 practicas obligatorias de testing y validacion
 **Rol**: Tech Lead
 **Fecha**: 2026-03-29
 **Estado**: Completado
 
 ## Entregables producidos
-- `CLAUDE.md` -- secciones 5.3 (LIDER_TECNICO loop), 6.1 (LOOP F y LOOP G), TESTER_QA definition_of_done, y seccion 12 (estandares) actualizadas
-- `.claude/agents/tech-lead.md` -- criterios de code review y flujo obligatorio agregados
-- `METODOLOGIA.md` -- seccion 5.3 (Code Review) reescrita como gate bloqueante, seccion 5.2 (QA) actualizada, diagrama de flujo seccion 11 actualizado
+- `CLAUDE.md` — Actualizado: DEV_BACKEND loop, ESPECIALISTA_INTEGRACIONES loop, INGENIERO_CLOUD loop, DEVOPS loop, definition_of_done, LOOP F, condiciones de commit
+- `METODOLOGIA.md` — Actualizado: flujo por tarea, condiciones de commit, diagrama de Sprint Execution, nueva seccion 5.6 Validacion Post-Deploy
+- `.claude/agents/backend-developer.md` — Actualizado: loop iterativo y workflow con tests unitarios obligatorios
+- `.claude/agents/integrations-specialist.md` — Actualizado: loop iterativo y workflow con tests e2e obligatorios
+- `.claude/agents/cloud-engineer.md` — Actualizado: loop iterativo y workflow con validacion post-deploy obligatoria
+- `.claude/agents/devops.md` — Actualizado: loop iterativo y workflow con validacion post-deploy obligatoria
 
 ## Resumen de lo realizado
-Se actualizo la configuracion del equipo GEN para hacer obligatorio el code review del Lider Tecnico antes de cada commit. Anteriormente los commits podian realizarse sin pasar por code review. A partir de ahora el flujo es: Dev implementa -> Dev pasa tests -> Tester ejecuta QA -> Lider Tecnico hace code review -> Solo cuando QA OK + Review OK -> PM commitea. Se documentaron 7 criterios de review explicitos que el Tech Lead debe verificar en cada tarea.
+Se incorporaron 3 practicas obligatorias al framework GEN:
+
+1. **Dev Backend -- Tests unitarios obligatorios**: Cada servicio/endpoint debe tener tests unitarios cubriendo happy path, validacion de inputs y errores esperados. No puede reportar tarea sin tests pasando. Framework: vitest o jest.
+
+2. **Integrador -- Tests e2e obligatorios**: Debe ejecutar tests e2e con Playwright sobre flujos completos que cruzan modulos. Es gate de calidad antes del commit.
+
+3. **Cloud/DevOps -- Validacion post-deploy obligatoria**: Deben verificar deploy exitoso, servicios respondiendo, conectividad entre servicios, health checks, logs limpios. Es gate antes de que el PM commitee.
+
+El flujo completo actualizado queda:
+```
+Dev implementa + tests unitarios -> Dev pasa tests -> Tester QA -> Integrador e2e ->
+Lider Tecnico code review -> Seguridad audita -> Cloud/DevOps validan deploy -> PM commitea
+```
 
 ## Decisiones tomadas
-- El code review se posiciona DESPUES del QA (0 bugs P1/P2) y ANTES del commit, no en paralelo
-- Se definen 7 criterios concretos de review en lugar de dejarlo a criterio libre del Tech Lead
-- Se marca como BLOQUEANTE en todos los documentos para que no haya ambiguedad
+- Se mantuvo la estructura existente de los archivos, agregando las nuevas practicas como extensiones de los loops existentes en lugar de crear secciones separadas
+- Se agrego la seccion 5.6 en METODOLOGIA.md para la validacion post-deploy como seccion dedicada dado que es un gate nuevo que no existia
+- Se actualizo el definition_of_done de 6 a 9 condiciones para reflejar los nuevos gates
 
 ## Bloqueantes / Riesgos
 - Ninguno
 
 ## Recomendaciones para el siguiente rol
-- Todo Dev debe saber que su tarea no se commitea hasta que el Lider Tecnico apruebe el code review
-- El PM debe verificar que el reporte de cada tarea incluya la aprobacion del Lider Tecnico antes de commitear
+- El PM debe comunicar al equipo que estas 3 practicas son obligatorias a partir de ahora
+- Los agentes deben leer sus archivos actualizados al inicio de cada tarea
+- El pipeline CI/CD (DevOps) deberia eventualmente automatizar la ejecucion de tests unitarios y e2e como parte del pipeline

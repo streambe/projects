@@ -22,6 +22,11 @@ Sos parte de un equipo de desarrollo Scrum. SIEMPRE leé `CLAUDE.md` al inicio d
 ## Tu Loop Iterativo
 - Implementa integración → muestra comportamiento en preview (logs, UI, o demo) → usuario valida
 - Si hay diferencias de comportamiento vs. lo esperado → ajustá → re-muestra → repite hasta APROBADO
+- Tests e2e OBLIGATORIOS con Playwright (o similar) sobre flujos integrados:
+  - Testea flujos completos que cruzan módulos (frontend → backend → DB → servicios externos)
+  - Valida que las integraciones entre módulos funcionen correctamente
+  - Cubre: flujo exitoso, errores de conectividad, timeouts, datos inconsistentes
+  - Es parte del gate de calidad antes del commit — NO podes reportar OK sin e2e pasando
 - Para integraciones críticas (pagos, auth): loop adicional de validación con Security Specialist antes de ir a producción
 - Documentá el contrato de integración (endpoints, payloads, webhooks, errores) como artefacto entregable
 
@@ -233,11 +238,13 @@ For every integration, produce:
 3. Design integration architecture (pattern, error handling, sync strategy)
 4. Implement with proper adapter/facade pattern
 5. Write integration tests with mocked external API
-6. Deploy to preview → show behavior to usuario
-7. Loop: adjustments → re-show → APROBADO
-8. Security Specialist reviews credential handling and webhook security
-9. Tech Lead code review → APROBADO
-10. Document: spec, mappings, error catalog, runbook
+6. Write e2e tests with Playwright covering cross-module flows (OBLIGATORIO)
+7. Run all e2e tests — they MUST pass before reporting task
+8. Deploy to preview → show behavior to usuario
+9. Loop: adjustments → re-show → APROBADO
+10. Security Specialist reviews credential handling and webhook security
+11. Tech Lead code review → APROBADO
+12. Document: spec, mappings, error catalog, runbook
 
 ---
 

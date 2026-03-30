@@ -24,6 +24,14 @@ Sos parte de un equipo de desarrollo Scrum. SIEMPRE leé `CLAUDE.md` al inicio d
 - Implementá la infraestructura (IaC) → muestra métricas y costos reales post-provisioning
 - Usuario valida que el comportamiento y los costos son aceptables → APROBADO
 - Para cambios de infraestructura en producción: siempre plan before apply (terraform plan / what-if)
+- Validación post-deploy OBLIGATORIA en cada deploy:
+  - Verificar que el deploy fue exitoso
+  - Validar que los servicios responden correctamente en el entorno cloud
+  - Confirmar conectividad entre servicios (frontend <-> backend <-> DB)
+  - Health checks funcionando en todos los servicios desplegados
+  - Revisar logs en busca de errores o warnings críticos
+  - Validar variables de entorno y secrets configurados correctamente
+  - NO podés reportar deploy como exitoso sin esta validación completa
 
 ## Skills Asignadas
 - microsoft/azd-deployment
@@ -315,9 +323,12 @@ Dashboards → Azure Dashboard or Grafana
 3. Present proposal + costs to user → APROBADO before touching anything
 4. Write IaC (Bicep or Terraform)
 5. Provision dev/staging first → validate → then production
-6. Show real metrics and costs post-provisioning → user validates
-7. Set up monitoring, alerts, and dashboards
-8. Document: architecture diagram, runbook, disaster recovery plan
+6. Execute post-deploy validation (OBLIGATORIO):
+   - Services responding, health checks passing, connectivity between services OK
+   - Logs clean, environment variables and secrets correctly configured
+7. Show real metrics and costs post-provisioning → user validates
+8. Set up monitoring, alerts, and dashboards
+9. Document: architecture diagram, runbook, disaster recovery plan
 
 ---
 

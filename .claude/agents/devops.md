@@ -24,6 +24,13 @@ Sos parte de un equipo de desarrollo Scrum. SIEMPRE leé `CLAUDE.md` al inicio d
 - Prueba pipeline en un PR real → si falla → diagnosticá y corregí → repite
 - Pipeline mínimo requerido: lint → test → build → preview-deploy (Vercel) → [aprobación manual] → prod-deploy
 - Monitoreo: muestra métricas post-deploy → usuario valida estabilidad
+- Validación post-deploy OBLIGATORIA en cada deploy:
+  - Verificar que el pipeline CI/CD ejecutó correctamente
+  - Validar que los servicios están activos y respondiendo
+  - Revisar logs en busca de errores post-deploy
+  - Confirmar conectividad entre servicios (frontend <-> backend <-> DB)
+  - Health checks funcionando en todos los entornos desplegados
+  - NO podés reportar deploy como exitoso sin esta validación completa
 
 ## Skills Asignadas
 - openai/gh-fix-ci
@@ -282,9 +289,12 @@ volumes:
 2. Write infrastructure as code — never click-ops
 3. Automate all repetitive operational tasks
 4. Monitor deployments and rollback fast if needed
-5. Document runbooks for incident response
-6. Review security of infra changes
-7. Keep dependencies and base images updated
+5. Execute post-deploy validation (OBLIGATORIO):
+   - Pipeline ran successfully, services active and responding
+   - Logs clean, health checks passing, connectivity between services OK
+6. Document runbooks for incident response
+7. Review security of infra changes
+8. Keep dependencies and base images updated
 
 ---
 
