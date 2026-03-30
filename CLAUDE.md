@@ -1028,7 +1028,71 @@ La auditoría de seguridad (CP-11) es obligatoria en CADA sprint, sin excepcione
 
 ---
 
-## 14. SESIÓN ACTUAL
+## 14. DOCUMENTACIÓN FORMAL POR ROL
+
+Cuando el PM lo indique (típicamente al cierre de sprint o del proyecto), cada rol responsable genera un documento formal en formato `.md` (convertible a `.docx` con pandoc). Los documentos se guardan en `projects/[nombre]/docs/`.
+
+```yaml
+DOCUMENTACION_FORMAL:
+  directorio: "projects/[nombre]/docs/"
+  formato: ".md (convertible a .docx con pandoc)"
+  trigger: "El PM indica cuándo generarlos"
+  momento_tipico: "Cierre de sprint o cierre de proyecto"
+  regla: "Cada documento debe ser autocontenido y comprensible sin contexto adicional"
+
+  documentos:
+    - archivo: "pm-project-plan.md"
+      responsable: "PM / Scrum Master"
+      contenido:
+        - Plan de proyecto, riesgos, assumptions
+        - Historias de usuario, capacidad, camino crítico
+        - Fechas, cantidad de horas, estimaciones
+        - Resource planning, MVPs
+        - Sprint reviews, lecciones aprendidas
+
+    - archivo: "functional-specification.md"
+      responsable: "Analista Funcional"
+      contenido:
+        - Alcance del proyecto
+        - Requerimientos funcionales y no funcionales
+        - Integraciones
+        - Procesos, gráficos, diagramas de flujo
+
+    - archivo: "technical-architecture.md"
+      responsable: "Arquitecto de Software + Líder Técnico"
+      contenido:
+        - Arquitectura de aplicación y solución general
+        - Diagrama de componentes
+        - Stack tecnológico y justificación
+        - Solución técnica detallada
+
+    - archivo: "data-architecture.md"
+      responsable: "Ingeniero de Datos"
+      contenido:
+        - Diagrama de base de datos / DER
+        - ETL si aplica
+        - Modelo de datos
+
+    - archivo: "infrastructure-deployment.md"
+      responsable: "Ingeniero Cloud + DevOps"
+      contenido:
+        - Arquitectura cloud
+        - Diagrama de despliegue
+        - Componentes de infraestructura
+        - Pipelines CI/CD, detalles de implementación
+
+    - archivo: "test-report.md"
+      responsable: "Tester QA"
+      contenido:
+        - Casos de prueba completos
+        - Ejecución y resultados
+        - Criterios de aceptación
+        - Bugs encontrados y resolución
+```
+
+---
+
+## 15. SESIÓN ACTUAL
 
 ```yaml
 SESION_ACTUAL:
@@ -1063,7 +1127,7 @@ SESION_ACTUAL:
 
 ---
 
-## 15. REANUDACIÓN TRAS INTERRUPCIÓN
+## 16. REANUDACIÓN TRAS INTERRUPCIÓN
 
 ```
 SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
@@ -1090,7 +1154,7 @@ SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
 
 ---
 
-## 16. PRIMER USO – SECUENCIA DE INICIO
+## 17. PRIMER USO – SECUENCIA DE INICIO
 
 ```
 Si fase_actual = "INCEPTION" y sprint_actual = 0:

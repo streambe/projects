@@ -19,6 +19,8 @@
 9. [Checkpoints de Aprobación](#9-checkpoints-de-aprobación)
 10. [Gestión de Estado](#10-gestión-de-estado)
 11. [Flujo Completo](#11-flujo-completo)
+12. [Documentación Formal por Rol](#12-documentación-formal-por-rol)
+13. [Estructura del Repositorio GEN](#13-estructura-del-repositorio-gen)
 
 ---
 
@@ -758,9 +760,43 @@ hotfix(scope): descripción  → fix urgente en producción
 
 ---
 
+## 12. Documentación Formal por Rol
+
+Cuando el PM lo indique (típicamente al cierre de sprint o del proyecto), cada rol responsable genera un documento formal. Los documentos se escriben en formato `.md` (convertible a `.docx` con pandoc) y se guardan en `projects/[nombre]/docs/`.
+
+**Reglas:**
+- El PM decide cuándo se generan los documentos
+- Cada documento debe ser autocontenido y comprensible sin contexto adicional
+- El formato es Markdown, convertible a Word con `pandoc archivo.md -o archivo.docx`
+
+### Documentos por rol
+
+| Documento | Responsable | Contenido principal |
+|-----------|-------------|---------------------|
+| `pm-project-plan.md` | PM / Scrum Master | Plan de proyecto, riesgos, assumptions, historias de usuario, capacidad, camino critico, fechas, horas, estimaciones, resource planning, MVPs, sprint reviews, lecciones aprendidas |
+| `functional-specification.md` | Analista Funcional | Alcance del proyecto, requerimientos funcionales y no funcionales, integraciones, procesos, graficos, diagramas de flujo |
+| `technical-architecture.md` | Arquitecto de Software + Lider Tecnico | Arquitectura de aplicacion y solucion general, diagrama de componentes, stack tecnologico y justificacion, solucion tecnica detallada |
+| `data-architecture.md` | Ingeniero de Datos | Diagrama de base de datos / DER, ETL si aplica, modelo de datos |
+| `infrastructure-deployment.md` | Ingeniero Cloud + DevOps | Arquitectura cloud, diagrama de despliegue, componentes de infraestructura, pipelines CI/CD, detalles de implementacion |
+| `test-report.md` | Tester QA | Casos de prueba completos, ejecucion y resultados, criterios de aceptacion, bugs encontrados y resolucion |
+
+### Momento de generacion
+
+```
+Cierre de sprint (parcial):
+  PM puede solicitar documentos actualizados con el estado del sprint
+  Tipico: test-report.md despues de cada sprint
+
+Cierre de proyecto (completo):
+  Todos los documentos se generan o actualizan con la version final
+  Entrega formal al usuario
+```
+
+> **Nota:** Estos documentos son adicionales al reporte de seguridad (`security-audit-sprint[N].docx`) que se genera obligatoriamente en cada sprint segun la seccion 5.4.
+
 ---
 
-## 12. Estructura del Repositorio GEN
+## 13. Estructura del Repositorio GEN
 
 ```
 Repositorio Git
