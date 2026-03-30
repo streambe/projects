@@ -1090,9 +1090,16 @@ SEGURIDAD_BASICA:
           Entregable: .claude/pm-reports/security-audit-sprint[N].docx
 ✅ CP-12: Product Owner valida features antes del Sprint Review → PO acepta/rechaza contra expectativas
 
+✅ CP-13: Deployment Guide documentado → `deployment-guide.md` completo y actualizado antes de cerrar sprint con deploy
+          Entregable: projects/[nombre]/docs/deployment-guide.md
+✅ CP-14: Lecciones aprendidas actualizadas → `lecciones-aprendidas.md` actualizado al cierre de cada sprint
+          Entregable: projects/[nombre]/docs/lecciones-aprendidas.md
+
 TODOS los checkpoints son loops. Ninguno se salta. El PM gestiona cada uno.
 La auditoría de seguridad (CP-11) es obligatoria en CADA sprint, sin excepciones.
 La validación del PO (CP-12) es obligatoria antes de presentar features al usuario en el Sprint Review.
+La guia de deployment (CP-13) es obligatoria en todo proyecto con deploy. Sin ella, el deploy NO esta completo.
+Las lecciones aprendidas (CP-14) se actualizan al cierre de cada sprint.
 ```
 
 ---
@@ -1157,6 +1164,35 @@ DOCUMENTACION_FORMAL:
         - Ejecución y resultados
         - Criterios de aceptación
         - Bugs encontrados y resolución
+
+    - archivo: "deployment-guide.md"
+      responsable: "Ingeniero Cloud + DevOps"
+      contenido:
+        - Arquitectura de deploy (diagrama: que servicio corre donde)
+        - Paso a paso para cada plataforma (Vercel, Render, AWS, etc.)
+        - Variables de entorno necesarias (nombre, descripcion, donde configurarlas)
+        - Comandos exactos de deploy (build, push, deploy manual)
+        - Archivos de configuracion requeridos (vercel.json, render.yaml, Dockerfile, etc.)
+        - Flujo completo de deploy paso a paso (desde commit hasta verificacion)
+        - URLs de produccion, dashboards, health checks
+        - Troubleshooting de problemas comunes
+        - Checklist pre-deploy
+      regla_obligatoria: |
+        Este documento es OBLIGATORIO en todo proyecto que se deploye.
+        Debe crearse en el PRIMER deploy y actualizarse en cada cambio de infraestructura.
+        Sin este documento, el deploy NO se considera completo.
+        Cualquier miembro del equipo debe poder replicar el deploy siguiendo esta guia.
+
+    - archivo: "lecciones-aprendidas.md"
+      responsable: "PM / Scrum Master"
+      contenido:
+        - Problemas encontrados durante el proyecto y como se resolvieron
+        - Bugs recurrentes y sus patrones
+        - Decisiones tecnicas que salieron bien o mal
+        - Checklist derivado de la experiencia
+      regla_obligatoria: |
+        Se actualiza al cierre de cada sprint con las lecciones nuevas.
+        Sirve como base de conocimiento para futuros proyectos.
 ```
 
 ---
