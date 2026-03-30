@@ -39,6 +39,41 @@ git clone https://github.com/VoltAgent/awesome-agent-skills.git awesome-agent-sk
 # 5. Desarrollo en projects/[nombre]/, commits en branch project-[nombre]
 ```
 
+### Configuración de permisos para subagentes
+
+GEN opera con múltiples subagentes que ejecutan comandos Bash internamente (find, grep, etc.).
+Para que el flujo no se interrumpa pidiendo confirmación en cada comando, es **OBLIGATORIO**
+configurar los permisos de Claude Code antes de usar GEN.
+
+**Archivos a configurar:**
+
+1. **Nivel usuario** (`~/.claude/settings.json`) — agregar dentro de `permissions`:
+```json
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allowedTools": ["*"]
+  }
+}
+```
+
+2. **Nivel proyecto** (`.claude/settings.local.json`) — crear o actualizar:
+```json
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allowedTools": ["*"]
+  }
+}
+```
+
+**¿Por qué es necesario?**
+- Los 16 agentes del equipo GEN se invocan como subagentes via la herramienta Agent
+- Cada subagente puede ejecutar comandos Bash para buscar archivos, correr tests, builds, etc.
+- Sin `bypassPermissions` + `allowedTools`, cada comando Bash dispara un prompt de confirmación al usuario, rompiendo el flujo autónomo de GEN
+
+**Nota de seguridad:** Este modo confía en que GEN y sus agentes no ejecutarán comandos destructivos sin validación. El PM gestiona y supervisa todas las acciones del equipo.
+
 ---
 
 ## INSTRUCCIÓN CRÍTICA PARA EL MODELO

@@ -34,7 +34,7 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
     e.preventDefault();
 
     if (!body.trim()) {
-      toast.error('El mensaje no puede estar vacío.');
+      toast.error('El mensaje no puede estar vacio.');
       return;
     }
 
@@ -49,17 +49,17 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
       setSubject('');
       setBody('');
     } catch {
-      toast.error('No se pudo enviar el mensaje. Intentá nuevamente.');
+      toast.error('No se pudo enviar el mensaje. Intenta nuevamente.');
     }
   }
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4" noValidate>
       {/* Simulation warning badge */}
-      <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-        <span role="img" aria-hidden="true" className="text-base">⚠️</span>
+      <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
         <p className="text-xs font-medium text-amber-800">
-          Modo simulación — los mensajes no se envían realmente
+          Modo simulacion -- los mensajes no se envian realmente
         </p>
       </div>
 
@@ -72,13 +72,13 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
               type="button"
               onClick={() => setChannel('gmail')}
               className={cn(
-                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
                 channel === 'gmail'
-                  ? 'border-red-300 bg-red-50 text-red-700'
+                  ? 'border-red-300 bg-red-50 text-red-700 shadow-sm'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
               )}
             >
-              <span role="img" aria-hidden="true">📧</span>
+              <span className="h-2 w-2 rounded-full bg-red-500" />
               Gmail
             </button>
           )}
@@ -87,13 +87,13 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
               type="button"
               onClick={() => setChannel('whatsapp')}
               className={cn(
-                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
                 channel === 'whatsapp'
-                  ? 'border-green-300 bg-green-50 text-green-700'
+                  ? 'border-green-300 bg-green-50 text-green-700 shadow-sm'
                   : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
               )}
             >
-              <span role="img" aria-hidden="true">💬</span>
+              <span className="h-2 w-2 rounded-full bg-green-500" />
               WhatsApp
             </button>
           )}
@@ -112,7 +112,7 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Asunto del correo"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
         </div>
       )}
@@ -127,8 +127,8 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
           rows={4}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder={channel === 'gmail' ? 'Escribí tu correo aquí...' : 'Escribí tu mensaje de WhatsApp...'}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          placeholder={channel === 'gmail' ? 'Escribe tu correo aqui...' : 'Escribe tu mensaje de WhatsApp...'}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
         />
       </div>
 
@@ -137,7 +137,7 @@ export function SendMessageForm({ clientId, hasEmail = true, hasWhatsApp = true 
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-50 shadow-sm"
         >
           {isPending ? 'Enviando...' : `Enviar por ${channel === 'gmail' ? 'Gmail' : 'WhatsApp'}`}
         </button>

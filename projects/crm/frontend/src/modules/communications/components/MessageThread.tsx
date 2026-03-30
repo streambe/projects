@@ -8,18 +8,21 @@ import type { Message } from '../communications.types';
 // ---------------------------------------------------------------------------
 
 function ChannelBadge({ channel }: { channel: Message['channel'] }) {
-  if (channel === 'gmail') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-        <span role="img" aria-hidden="true">📧</span>
-        Gmail
-      </span>
-    );
-  }
+  const isGmail = channel === 'gmail';
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-      <span role="img" aria-hidden="true">💬</span>
-      WhatsApp
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+        isGmail ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700',
+      )}
+    >
+      <span
+        className={cn(
+          'h-1.5 w-1.5 rounded-full',
+          isGmail ? 'bg-red-500' : 'bg-green-500',
+        )}
+      />
+      {isGmail ? 'Gmail' : 'WhatsApp'}
     </span>
   );
 }
@@ -53,9 +56,8 @@ export function MessageThread({ messages, isLoading }: MessageThreadProps) {
 
   if (sorted.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-400">
-        <span className="text-3xl">💬</span>
-        <span className="text-sm">No hay mensajes aún.</span>
+      <div className="flex flex-col items-center justify-center gap-1 py-12">
+        <span className="text-sm text-gray-400">No hay mensajes aun.</span>
       </div>
     );
   }
@@ -72,10 +74,10 @@ export function MessageThread({ messages, isLoading }: MessageThreadProps) {
           >
             <div
               className={cn(
-                'max-w-[75%] rounded-2xl px-4 py-3 shadow-sm',
+                'max-w-[75%] rounded-2xl px-4 py-3',
                 isSent
-                  ? 'rounded-tr-sm bg-blue-600 text-white'
-                  : 'rounded-tl-sm bg-gray-100 text-gray-900',
+                  ? 'rounded-tr-sm bg-brand-500 text-white shadow-sm'
+                  : 'rounded-tl-sm bg-surface-100 text-gray-900',
               )}
             >
               {/* Subject (Gmail only) */}
@@ -83,7 +85,7 @@ export function MessageThread({ messages, isLoading }: MessageThreadProps) {
                 <p
                   className={cn(
                     'mb-1 text-xs font-semibold',
-                    isSent ? 'text-blue-100' : 'text-gray-500',
+                    isSent ? 'text-white/70' : 'text-gray-500',
                   )}
                 >
                   Asunto: {msg.subject}

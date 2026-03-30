@@ -8,6 +8,8 @@ import { MessageThread } from '../../communications/components/MessageThread';
 import { SendMessageForm } from '../../communications/components/SendMessageForm';
 import { useClientMessages } from '../../communications/hooks/useCommunications';
 import { cn } from '../../../lib/utils';
+import { IconUsers } from '../../../components/ui/Icons';
+import { EmptyState } from '../../../components/ui/EmptyState';
 import type { ActivityType } from '../../activities/activities.types';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +27,7 @@ const HOW_FOUND_LABELS: Record<string, string> = {
 
 const TYPE_LABELS: Record<ActivityType, string> = {
   llamada: 'Llamada',
-  reunion: 'Reunión',
+  reunion: 'Reunion',
   tarea: 'Tarea',
 };
 
@@ -36,7 +38,7 @@ const TYPE_LABELS: Record<ActivityType, string> = {
 type Tab = 'info' | 'activities' | 'communications';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'info', label: 'Información' },
+  { id: 'info', label: 'Informacion' },
   { id: 'activities', label: 'Actividades' },
   { id: 'communications', label: 'Comunicaciones' },
 ];
@@ -55,18 +57,26 @@ export function ClientProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20 text-gray-400">
-        <span className="text-sm">Cargando perfil del cliente...</span>
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+          <span className="text-sm text-gray-400">Cargando perfil del cliente...</span>
+        </div>
       </div>
     );
   }
 
   if (isError || !client) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20 text-gray-500">
-        <span className="text-3xl">😕</span>
-        <p className="text-sm">No se encontró el cliente.</p>
-        <Link to="/clientes" className="text-sm text-blue-600 hover:underline">
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-100 text-gray-400">
+          <IconUsers width={28} height={28} />
+        </div>
+        <p className="text-sm text-gray-500">No se encontro el cliente.</p>
+        <Link
+          to="/clientes"
+          className="text-sm font-medium text-brand-500 transition-colors hover:text-brand-600"
+        >
           Volver al listado
         </Link>
       </div>
@@ -76,42 +86,55 @@ export function ClientProfilePage() {
   const activities = activitiesData?.data ?? [];
   const messages = messagesData?.data ?? [];
 
+  const initials = `${client.firstName.charAt(0)}${client.lastName.charAt(0)}`.toUpperCase();
+
   return (
     <div className="space-y-6 p-6">
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="text-sm text-gray-500">
-        <Link to="/clientes" className="hover:text-blue-600 hover:underline">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+        <Link
+          to="/clientes"
+          className="text-gray-400 transition-colors hover:text-brand-500"
+        >
           Clientes
         </Link>
-        <span className="mx-2">/</span>
-        <span className="font-medium text-gray-900">
+        <span className="text-gray-300">/</span>
+        <span className="font-medium text-gray-700">
           {client.firstName} {client.lastName}
         </span>
       </nav>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {client.firstName} {client.lastName}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">DNI: {client.dni}</p>
+      <div className="flex items-center gap-5">
+        {/* Avatar */}
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-bold text-white shadow-sm">
+          {initials}
         </div>
-        <span
-          className={cn(
-            'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium',
-            client.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-600',
-          )}
-        >
-          {client.isActive ? 'Activo' : 'Inactivo'}
-        </span>
+
+        <div className="flex flex-1 flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+              {client.firstName} {client.lastName}
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-500">DNI: {client.dni}</p>
+          </div>
+
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
+              client.isActive
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-surface-200 text-gray-600',
+            )}
+          >
+            {client.isActive ? 'Activo' : 'Inactivo'}
+          </span>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <div className="flex gap-6" role="tablist">
+      {/* Pill Tabs */}
+      <div className="rounded-xl bg-surface-100 p-1" role="tablist">
+        <div className="flex gap-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -120,10 +143,10 @@ export function ClientProfilePage() {
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'pb-3 text-sm font-medium transition-colors border-b-2 -mb-px',
+                'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all',
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700',
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700',
               )}
             >
               {tab.label}
@@ -135,9 +158,9 @@ export function ClientProfilePage() {
       {/* Tab: Info */}
       {activeTab === 'info' && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InfoCard label="Teléfono principal" value={client.phonePrimary} />
-          {client.phoneAlt && <InfoCard label="Teléfono alternativo" value={client.phoneAlt} />}
-          {client.email && <InfoCard label="Correo electrónico" value={client.email} />}
+          <InfoCard label="Telefono principal" value={client.phonePrimary} />
+          {client.phoneAlt && <InfoCard label="Telefono alternativo" value={client.phoneAlt} />}
+          {client.email && <InfoCard label="Correo electronico" value={client.email} />}
           {client.whatsappNumber && <InfoCard label="WhatsApp" value={client.whatsappNumber} />}
           {client.city && <InfoCard label="Ciudad" value={client.city} />}
           {client.province && <InfoCard label="Provincia" value={client.province} />}
@@ -149,7 +172,7 @@ export function ClientProfilePage() {
           )}
           {client.howFoundUs && (
             <InfoCard
-              label="Cómo nos conoció"
+              label="Como nos conocio"
               value={HOW_FOUND_LABELS[client.howFoundUs] ?? client.howFoundUs}
             />
           )}
@@ -158,9 +181,13 @@ export function ClientProfilePage() {
             value={format(parseISO(client.createdAt), "d 'de' MMMM yyyy", { locale: es })}
           />
           {client.notes && (
-            <div className="sm:col-span-2 lg:col-span-3 rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-xs font-medium text-gray-500 mb-1">Notas internas</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{client.notes}</p>
+            <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border border-surface-200 bg-white p-5 shadow-card">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+                Notas internas
+              </p>
+              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                {client.notes}
+              </p>
             </div>
           )}
         </div>
@@ -170,36 +197,52 @@ export function ClientProfilePage() {
       {activeTab === 'activities' && (
         <div>
           {activities.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-400 rounded-xl border border-gray-200 bg-white">
-              <span className="text-3xl">📋</span>
-              <span className="text-sm">Este cliente no tiene actividades registradas.</span>
-            </div>
+            <EmptyState
+              icon={<IconUsers width={24} height={24} />}
+              title="Sin actividades registradas"
+              description="Este cliente no tiene actividades registradas todavia."
+            />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
               <table className="w-full text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50">
+                <thead className="border-b border-surface-200 bg-surface-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Tipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Título</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fecha</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Estado</th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Tipo
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Titulo
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Fecha
+                    </th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Estado
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-surface-100">
                   {activities.map((activity) => (
-                    <tr key={activity.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-600">{TYPE_LABELS[activity.type]}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{activity.title}</td>
-                      <td className="px-4 py-3 text-gray-600">
+                    <tr
+                      key={activity.id}
+                      className="transition-colors hover:bg-surface-50"
+                    >
+                      <td className="px-5 py-3.5 text-gray-600">
+                        {TYPE_LABELS[activity.type]}
+                      </td>
+                      <td className="px-5 py-3.5 font-medium text-gray-900">
+                        {activity.title}
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-600">
                         {format(parseISO(activity.scheduledAt), "d MMM yyyy", { locale: es })}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <span
                           className={cn(
-                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
                             activity.status === 'pendiente'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800',
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-emerald-100 text-emerald-700',
                           )}
                         >
                           {activity.status === 'pendiente' ? 'Pendiente' : 'Realizada'}
@@ -218,8 +261,8 @@ export function ClientProfilePage() {
       {activeTab === 'communications' && (
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Thread */}
-          <div className="flex-1 rounded-xl border border-gray-200 bg-white overflow-hidden">
-            <div className="border-b border-gray-100 px-4 py-3">
+          <div className="flex-1 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
+            <div className="border-b border-surface-200 bg-surface-50 px-5 py-3.5">
               <h2 className="text-sm font-semibold text-gray-700">Historial de mensajes</h2>
             </div>
             <div className="max-h-[500px] overflow-y-auto">
@@ -228,8 +271,8 @@ export function ClientProfilePage() {
           </div>
 
           {/* Send form */}
-          <div className="w-full lg:w-80 shrink-0 rounded-xl border border-gray-200 bg-white p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Enviar mensaje</h3>
+          <div className="w-full shrink-0 rounded-2xl border border-surface-200 bg-white p-5 shadow-card lg:w-80">
+            <h3 className="mb-4 text-sm font-semibold text-gray-700">Enviar mensaje</h3>
             <SendMessageForm
               clientId={id}
               hasEmail={!!client.email}
@@ -248,9 +291,9 @@ export function ClientProfilePage() {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs font-medium text-gray-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-gray-900">{value}</p>
+    <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{label}</p>
+      <p className="mt-1.5 text-sm font-medium text-gray-900">{value}</p>
     </div>
   );
 }

@@ -6,12 +6,14 @@ import { AuthProvider } from './modules/auth/AuthContext';
 import { ProtectedRoute } from './modules/auth/components/ProtectedRoute';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 import { AppLayout } from './components/AppLayout';
+import { DashboardPage } from './modules/dashboard/pages/DashboardPage';
 import { ClientsPage } from './modules/clients/pages/ClientsPage';
 import { ClientProfilePage } from './modules/clients/pages/ClientProfilePage';
 import { ActivitiesPage } from './modules/activities/pages/ActivitiesPage';
 import { CommunicationsPage } from './modules/communications/pages/CommunicationsPage';
 import { ReportsPage } from './modules/reports/pages/ReportsPage';
 import { PipelinePage } from './modules/pipeline/pages/PipelinePage';
+import { ProfilePage } from './modules/profile/pages/ProfilePage';
 
 export function App() {
   return (
@@ -25,14 +27,17 @@ export function App() {
             {/* Protected — all app routes behind auth */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                {/* Redirect root to clients */}
-                <Route index element={<Navigate to="/clientes" replace />} />
+                {/* Redirect root to dashboard */}
+                <Route index element={<Navigate to="/dashboard" replace />} />
+
+                {/* Dashboard */}
+                <Route path="dashboard" element={<DashboardPage />} />
 
                 {/* Clients */}
                 <Route path="clientes" element={<ClientsPage />} />
                 <Route path="clientes/:id" element={<ClientProfilePage />} />
 
-                {/* Pipeline — Kanban board (RF-11) */}
+                {/* Pipeline — Kanban board */}
                 <Route path="pipeline" element={<PipelinePage />} />
 
                 {/* Agenda */}
@@ -44,8 +49,11 @@ export function App() {
                 {/* Reports */}
                 <Route path="reportes" element={<ReportsPage />} />
 
+                {/* Profile */}
+                <Route path="perfil" element={<ProfilePage />} />
+
                 {/* Fallback */}
-                <Route path="*" element={<Navigate to="/clientes" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>
           </Routes>

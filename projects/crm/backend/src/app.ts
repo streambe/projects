@@ -14,6 +14,7 @@ import opportunityRoutes, { clientOpportunityRoutes } from './modules/opportunit
 import activityRoutes, { clientActivityRoutes } from './modules/activities/activities.routes';
 import communicationsRoutes, { clientMessagesRoutes } from './modules/communications/communications.routes';
 import reportsRoutes from './modules/reports/reports.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import { AppError } from './shared/utils/errors';
 
 export async function buildApp() {
@@ -132,6 +133,7 @@ export async function buildApp() {
 
       await v1.register(communicationsRoutes, { prefix: '/communications' });
       await v1.register(reportsRoutes, { prefix: '/reports' });
+      await v1.register(dashboardRoutes, { prefix: '/dashboard' });
 
       // Nested client routes: /clients/:clientId/opportunities, /clients/:clientId/activities
       // and /clients/:clientId/messages

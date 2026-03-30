@@ -4,8 +4,13 @@ import { format, isPast, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { cn } from '../../../lib/utils';
+import { PageHeader } from '../../../components/ui/PageHeader';
+import { TableSkeleton } from '../../../components/ui/Skeleton';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { IconCalendar, IconPhone, IconMeeting, IconTask } from '../../../components/ui/Icons';
 import { useActivitiesList, useMarkActivityDone } from '../hooks/useActivities';
 import { useUsersList } from '../../users/hooks/useUsers';
+import { ActivityCalendar } from '../components/ActivityCalendar';
 import type { ActivityStatus, ActivityType } from '../activities.types';
 
 // ---------------------------------------------------------------------------
@@ -16,47 +21,51 @@ function ActivityTypeIcon({ type }: { type: ActivityType }) {
   if (type === 'llamada') {
     return (
       <span
-        role="img"
         aria-label="Llamada"
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-sm"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
       >
-        📞
+        <IconPhone width={14} height={14} />
       </span>
     );
   }
   if (type === 'reunion') {
     return (
       <span
-        role="img"
-        aria-label="Reunión"
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-sm"
+        aria-label="Reunion"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600"
       >
-        🤝
+        <IconMeeting width={14} height={14} />
       </span>
     );
   }
   return (
     <span
-      role="img"
       aria-label="Tarea"
-      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-sm"
+      className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600"
     >
-      ✅
+      <IconTask width={14} height={14} />
     </span>
   );
 }
 
 const TYPE_LABELS: Record<ActivityType, string> = {
   llamada: 'Llamada',
-  reunion: 'Reunión',
+  reunion: 'Reunion',
   tarea: 'Tarea',
 };
+
+// ---------------------------------------------------------------------------
+// View mode type
+// ---------------------------------------------------------------------------
+
+type ViewMode = 'table' | 'calendar';
 
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export function ActivitiesPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [status, setStatus] = useState<ActivityStatus | ''>('');
   const [type, setType] = useState<ActivityType | ''>('');
   const [dateFrom, setDateFrom] = useState('');
@@ -92,7 +101,7 @@ export function ActivitiesPage() {
       await markDone.mutateAsync(id);
       toast.success('Actividad marcada como realizada');
     } catch {
-      toast.error('No se pudo actualizar la actividad. Intentá nuevamente.');
+      toast.error('No se pudo actualizar la actividad. Intenta nuevamente.');
     }
   }
 
@@ -107,18 +116,47 @@ export function ActivitiesPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Actividades</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {data?.meta.total ?? 0} actividades en total
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Actividades"
+        subtitle={`${data?.meta.total ?? 0} actividades en total`}
+      />
 
-      {/* Filters */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      {/* Filters + View Toggle */}
+      <div className="rounded-2xl border border-surface-200 bg-white p-4 shadow-card">
         <div className="flex flex-wrap items-end gap-4">
+          {/* View mode toggle */}
+          <div className="min-w-[180px]">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Vista
+            </label>
+            <div className="inline-flex rounded-lg border border-surface-200 bg-surface-50 p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+                  viewMode === 'table'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700',
+                )}
+              >
+                Lista
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+                  viewMode === 'calendar'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700',
+                )}
+              >
+                Calendario
+              </button>
+            </div>
+          </div>
+
           {/* Estado */}
           <div className="min-w-[140px]">
             <label htmlFor="filter-status" className="block text-xs font-medium text-gray-600 mb-1">
@@ -128,7 +166,7 @@ export function ActivitiesPage() {
               id="filter-status"
               value={status}
               onChange={(e) => setStatus(e.target.value as ActivityStatus | '')}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               <option value="">Todos</option>
               <option value="pendiente">Pendiente</option>
@@ -145,11 +183,11 @@ export function ActivitiesPage() {
               id="filter-type"
               value={type}
               onChange={(e) => setType(e.target.value as ActivityType | '')}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               <option value="">Todos</option>
               <option value="llamada">Llamada</option>
-              <option value="reunion">Reunión</option>
+              <option value="reunion">Reunion</option>
               <option value="tarea">Tarea</option>
             </select>
           </div>
@@ -163,7 +201,7 @@ export function ActivitiesPage() {
               id="filter-assigned-to"
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
               <option value="">Todos</option>
               {users?.map((user) => (
@@ -184,7 +222,7 @@ export function ActivitiesPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>
 
@@ -198,7 +236,7 @@ export function ActivitiesPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-lg border border-surface-200 bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>
 
@@ -236,7 +274,7 @@ export function ActivitiesPage() {
                 setOverdue(false);
                 setAssignedTo('');
               }}
-              className="self-end pb-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              className="self-end pb-2 text-sm text-brand-600 hover:text-brand-800 hover:underline"
             >
               Limpiar filtros
             </button>
@@ -244,30 +282,31 @@ export function ActivitiesPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16 text-gray-400">
-            <span className="text-sm">Cargando actividades...</span>
-          </div>
-        ) : isError ? (
-          <div className="flex items-center justify-center py-16 text-red-500">
-            <span className="text-sm">Error al cargar actividades. Intentá nuevamente.</span>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-gray-400">
-            <span className="text-4xl">📋</span>
-            <span className="text-sm">No hay actividades que coincidan con los filtros.</span>
-          </div>
-        ) : (
+      {/* Content: Table or Calendar */}
+      {isLoading ? (
+        <TableSkeleton rows={6} cols={8} />
+      ) : isError ? (
+        <div className="flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 py-16 text-red-600">
+          <span className="text-sm">Error al cargar actividades. Intenta nuevamente.</span>
+        </div>
+      ) : sorted.length === 0 ? (
+        <EmptyState
+          icon={<IconCalendar width={24} height={24} />}
+          title="Sin actividades"
+          description="No hay actividades que coincidan con los filtros aplicados."
+        />
+      ) : viewMode === 'calendar' ? (
+        <ActivityCalendar activities={sorted} />
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
           <table className="w-full text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
+            <thead className="border-b border-surface-200 bg-surface-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Tipo
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Título
+                  Titulo
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Cliente
@@ -289,7 +328,7 @@ export function ActivitiesPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-surface-100">
               {sorted.map((activity) => {
                 const overdueFn = isOverdue(activity);
                 return (
@@ -297,8 +336,8 @@ export function ActivitiesPage() {
                     key={activity.id}
                     data-testid="activity-row"
                     className={cn(
-                      'transition-colors hover:bg-gray-50',
-                      overdueFn && 'bg-amber-50 hover:bg-amber-100',
+                      'transition-colors hover:bg-surface-50',
+                      overdueFn && 'bg-amber-50/60 hover:bg-amber-100/60',
                     )}
                   >
                     {/* Tipo */}
@@ -309,27 +348,26 @@ export function ActivitiesPage() {
                       </div>
                     </td>
 
-                    {/* Título */}
+                    {/* Titulo */}
                     <td className="px-4 py-3">
-                      <span className={cn('font-medium text-gray-900', overdueFn && 'text-amber-900')}>
-                        {activity.title}
-                      </span>
-                      {overdueFn && (
-                        <span
-                          role="img"
-                          aria-label="Vencida"
-                          className="ml-2 text-amber-500"
-                        >
-                          ⚠️
+                      <div className="flex items-center gap-2">
+                        <span className={cn('font-medium text-gray-900', overdueFn && 'text-amber-900')}>
+                          {activity.title}
                         </span>
-                      )}
+                        {overdueFn && (
+                          <span
+                            aria-label="Vencida"
+                            className="inline-block h-2 w-2 rounded-full bg-red-500 flex-shrink-0"
+                          />
+                        )}
+                      </div>
                     </td>
 
                     {/* Cliente */}
                     <td className="px-4 py-3">
                       <Link
                         to={`/clientes/${activity.clientId}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        className="text-brand-600 hover:text-brand-800 hover:underline"
                       >
                         {activity.client
                           ? `${activity.client.firstName} ${activity.client.lastName}`
@@ -339,7 +377,7 @@ export function ActivitiesPage() {
 
                     {/* Responsable */}
                     <td className="px-4 py-3 text-gray-700">
-                      {activity.responsibleUser?.fullName ?? '—'}
+                      {activity.responsibleUser?.fullName ?? '--'}
                     </td>
 
                     {/* Fecha */}
@@ -359,7 +397,7 @@ export function ActivitiesPage() {
                           {format(parseISO(activity.dueAt), "d 'de' MMMM yyyy", { locale: es })}
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-gray-400">--</span>
                       )}
                     </td>
 
@@ -369,8 +407,8 @@ export function ActivitiesPage() {
                         className={cn(
                           'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
                           activity.status === 'pendiente'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800',
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700',
                         )}
                       >
                         {activity.status === 'pendiente' ? 'Pendiente' : 'Realizada'}
@@ -384,7 +422,7 @@ export function ActivitiesPage() {
                           type="button"
                           onClick={() => void handleMarkDone(activity.id)}
                           disabled={markDone.isPending}
-                          className="rounded-lg border border-green-300 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
+                          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50"
                         >
                           Marcar realizada
                         </button>
@@ -395,8 +433,8 @@ export function ActivitiesPage() {
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
