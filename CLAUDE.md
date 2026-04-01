@@ -908,14 +908,16 @@ SEGURIDAD_BASICA:
 ✅ CP-08: Deploy a producción
 ✅ CP-09: Features de seguridad/pagos
 ✅ CP-10: Skills externas no verificadas → Seguridad + usuario aprueban
-✅ CP-11: Auditoría de seguridad del sprint (OBLIGATORIA) → veredicto GO antes de Sprint Review
+✅ CP-11: Acta de Constitución aprobada → BLOQUEANTE, sin ella NO se inicia desarrollo
+          Entregable: projects/[nombre]/docs/acta-constitucion.md
+✅ CP-12: Auditoría de seguridad del sprint (OBLIGATORIA) → veredicto GO antes de Sprint Review
           Entregable: .claude/pm-reports/security-audit-sprint[N].md
-✅ CP-12: Product Owner valida features antes del Sprint Review → PO acepta/rechaza contra expectativas
-✅ CP-13: Documentación formal generada → todos los documentos de la sección 14 creados/actualizados antes de cerrar sprint
+✅ CP-13: Product Owner valida features antes del Sprint Review → PO acepta/rechaza contra expectativas
+✅ CP-14: Documentación formal generada → todos los documentos de la sección 14 creados/actualizados antes de cerrar sprint
           Entregable: projects/[nombre]/docs/ (ver sección 14 para lista completa)
-✅ CP-14: Deployment Guide documentado → `deployment-guide.md` completo y actualizado antes de cerrar sprint con deploy
+✅ CP-15: Deployment Guide documentado → `deployment-guide.md` completo y actualizado antes de cerrar sprint con deploy
           Entregable: projects/[nombre]/docs/deployment-guide.md
-✅ CP-15: Lecciones aprendidas actualizadas → `lecciones-aprendidas.md` actualizado al cierre de cada sprint
+✅ CP-16: Lecciones aprendidas actualizadas → `lecciones-aprendidas.md` actualizado al cierre de cada sprint
           Entregable: projects/[nombre]/docs/lecciones-aprendidas.md
 
 TODOS los checkpoints son loops. Ninguno se salta. El PM gestiona cada uno.
@@ -940,6 +942,26 @@ DOCUMENTACION_FORMAL:
   momento: "Al cierre de cada sprint, ANTES del Sprint Review"
 
   documentos:
+    - archivo: "acta-constitucion.md"
+      responsable: "PM / Scrum Master (Alan Turing)"
+      cuando: "OBLIGATORIO antes de iniciar desarrollo — gate bloqueante"
+      contenido:
+        - Nombre del proyecto, fecha, sponsor
+        - Alcance (in scope / out of scope)
+        - Requerimientos funcionales y no funcionales (resumen)
+        - Equipo asignado (roles, nombres de científicos)
+        - Plan de comunicación (ceremonias, reportes, canales)
+        - Plan de trabajo aceptado (sprints, épicas, timeline estimado)
+        - Riesgos identificados y plan de mitigación
+        - Criterios de éxito
+        - Supuestos y restricciones
+        - Aprobaciones (usuario confirmó)
+      regla: |
+        BLOQUEANTE: Sin acta de constitución aprobada, NO se inicia desarrollo.
+        El PM la genera después de tener requerimientos, estimaciones del equipo,
+        prioridades y dependencias. Presenta al usuario → loop hasta APROBADO.
+        Solo con acta aprobada se puede arrancar Sprint 1.
+
     - archivo: "functional-specification.md"
       responsable: "Analista Funcional (Ada Lovelace)"
       cuando: "INCEPTION + actualizar en cada sprint si hay cambios de scope"
@@ -1173,15 +1195,16 @@ PASO 2: Líder Técnico + Arquitecto → propuesta de stack (loop hasta APROBADO
 PASO 3: Arquitecto → arquitectura de alto nivel (loop hasta APROBADO)
 PASO 4: UX Designer → wireframes (loop hasta APROBADO)
 PASO 5: Seguridad → sincroniza y valida skills del repo a usar en el proyecto
-PASO 6: DevOps → inicializa repo GitHub + pipeline CI/CD básico
-PASO 7: PM → configura Trello Board
-PASO 8: Sprint Planning Sprint 1 (loop hasta APROBADO)
-PASO 9: 🚀 Desarrollo comienza
+PASO 6: PM → genera Acta de Constitución de Proyecto (loop hasta APROBADO) ← BLOQUEANTE
+PASO 7: DevOps → inicializa repo GitHub + pipeline CI/CD básico
+PASO 8: PM → configura Trello Board
+PASO 9: Sprint Planning Sprint 1 (loop hasta APROBADO)
+PASO 10: 🚀 Desarrollo comienza (SOLO con Acta aprobada)
 ```
 
 ---
 
-*Versión: 2.1.0*
+*Versión: 2.2.0*
 *Skills source: https://github.com/VoltAgent/awesome-agent-skills.git*
 *Principio rector: Iterar indefinidamente hasta aprobación. La calidad no tiene atajos.*
 *Fuente de verdad única del proyecto – actualizar al inicio y fin de cada sesión.*
