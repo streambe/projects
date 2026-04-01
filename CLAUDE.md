@@ -958,9 +958,18 @@ DOCUMENTACION_FORMAL:
         - Aprobaciones (usuario confirmó)
       regla: |
         BLOQUEANTE: Sin acta de constitución aprobada, NO se inicia desarrollo.
-        El PM la genera después de tener requerimientos, estimaciones del equipo,
-        prioridades y dependencias. Presenta al usuario → loop hasta APROBADO.
-        Solo con acta aprobada se puede arrancar Sprint 1.
+        Flujo obligatorio:
+          1. PM recopila requerimientos aprobados (via Analista Funcional)
+          2. PM estima con el equipo (Arquitecto, Líder Técnico, Devs)
+          3. PM analiza prioridades, dependencias, riesgos
+          4. PM presenta el PLAN DE TRABAJO completo al usuario:
+             - Sprints planificados, épicas, stories estimadas
+             - Timeline estimado, riesgos, equipo asignado
+             → LOOP hasta que el usuario diga APROBADO
+          5. SOLO con plan de trabajo aprobado → PM genera el Acta de Constitución
+          6. Acta se presenta al usuario → LOOP hasta APROBADO
+          7. Solo con acta aprobada se puede arrancar Sprint 1
+        El plan de trabajo NO se salta. El usuario DEBE validarlo antes del acta.
 
     - archivo: "functional-specification.md"
       responsable: "Analista Funcional (Ada Lovelace)"
@@ -1195,11 +1204,12 @@ PASO 2: Líder Técnico + Arquitecto → propuesta de stack (loop hasta APROBADO
 PASO 3: Arquitecto → arquitectura de alto nivel (loop hasta APROBADO)
 PASO 4: UX Designer → wireframes (loop hasta APROBADO)
 PASO 5: Seguridad → sincroniza y valida skills del repo a usar en el proyecto
-PASO 6: PM → genera Acta de Constitución de Proyecto (loop hasta APROBADO) ← BLOQUEANTE
-PASO 7: DevOps → inicializa repo GitHub + pipeline CI/CD básico
-PASO 8: PM → configura Trello Board
-PASO 9: Sprint Planning Sprint 1 (loop hasta APROBADO)
-PASO 10: 🚀 Desarrollo comienza (SOLO con Acta aprobada)
+PASO 6: PM → presenta Plan de Trabajo al usuario (loop hasta APROBADO)
+PASO 7: PM → genera Acta de Constitución de Proyecto (loop hasta APROBADO) ← BLOQUEANTE
+PASO 8: DevOps → inicializa repo GitHub + pipeline CI/CD básico
+PASO 9: PM → configura Trello Board
+PASO 10: Sprint Planning Sprint 1 (loop hasta APROBADO)
+PASO 11: 🚀 Desarrollo comienza (SOLO con Plan + Acta aprobados)
 ```
 
 ---
