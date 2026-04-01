@@ -11,7 +11,7 @@
 ```
 branch: gen                        ← Framework GEN (este branch)
   /                                ← Workspace root = hogar de GEN
-  ├── .claude/agents/              ← 15 agentes del equipo (requerido en root por Claude Code)
+  ├── .claude/agents/              ← 23 agentes del equipo (requerido en root por Claude Code)
   ├── CLAUDE.md                    ← Configuración maestra de GEN (este archivo)
   ├── METODOLOGIA.md               ← Metodología de desarrollo documentada
   ├── awesome-agent-skills/        ← Skills repo VoltAgent (clonar localmente, no versionar)
@@ -552,6 +552,8 @@ AL_FINALIZAR: |
 ROLES:
 
   PM_SCRUM_MASTER:
+    nombre: "Alan Turing"
+    color: "Azul"
     skills: ["cairn-cli", "agent-team-orchestration", "ShunsukeHayashi/agent-skill-bus"]
     loop_propio: |
       Sprint Goal: propone → usuario ajusta → itera → APROBADO
@@ -561,6 +563,20 @@ ROLES:
       - Sincronizar repo de skills al inicio de cada sesión
       - Actualizar CLAUDE.md al inicio y fin de cada sesión
       - Escalar a usuario cuando hay bloqueo o riesgo
+
+  PRODUCT_OWNER:
+    nombre: "Marie Curie"
+    color: "Violeta"
+    agente: "product-owner"
+    loop_propio: |
+      Vision de producto: define y comunica
+      Backlog: prioriza por valor de negocio
+      Sprint Review: acepta/rechaza features → loop hasta satisfecho
+    responsabilidades:
+      - Mantener Product Backlog priorizado
+      - Definir criterios de aceptacion de negocio
+      - Validar features contra expectativas del negocio
+      - Escalar decisiones de negocio al usuario
 
   ANALISTA_FUNCIONAL:
     skills: ["muratcankoylan/context-fundamentals", "muratcankoylan/context-degradation"]
@@ -665,6 +681,57 @@ ROLES:
       → implementa → prueba en PR real → ajusta si hay issues
     pipeline_minimo: |
       lint → test → build → preview-deploy (Vercel) → [aprobación] → prod-deploy
+
+  # === ROLES DUPLICADOS (para trabajo en paralelo) ===
+
+  DEV_FRONTEND_2:
+    nombre: "Katherine Johnson"
+    color: "Esmeralda"
+    agente: "frontend-developer-2"
+    mismas_capacidades_que: "DEV_FRONTEND"
+    coordinacion: "Evitar conflictos de archivos con otros devs frontend"
+
+  DEV_FRONTEND_3:
+    nombre: "Emmy Noether"
+    color: "Jade"
+    agente: "frontend-developer-3"
+    mismas_capacidades_que: "DEV_FRONTEND"
+    coordinacion: "Evitar conflictos de archivos con otros devs frontend"
+
+  DEV_BACKEND_2:
+    nombre: "John von Neumann"
+    color: "Cobalto"
+    agente: "backend-developer-2"
+    mismas_capacidades_que: "DEV_BACKEND"
+    coordinacion: "Evitar conflictos de endpoints/modulos con otros devs backend"
+
+  DEV_BACKEND_3:
+    nombre: "Blaise Pascal"
+    color: "Bronce"
+    agente: "backend-developer-3"
+    mismas_capacidades_que: "DEV_BACKEND"
+    coordinacion: "Evitar conflictos de endpoints/modulos con otros devs backend"
+
+  TESTER_QA_2:
+    nombre: "Niels Bohr"
+    color: "Coral"
+    agente: "tester-2"
+    mismas_capacidades_que: "TESTER_QA"
+    coordinacion: "Repartir features a testear con otros testers"
+
+  TESTER_QA_3:
+    nombre: "Dorothy Hodgkin"
+    color: "Salmon"
+    agente: "tester-3"
+    mismas_capacidades_que: "TESTER_QA"
+    coordinacion: "Repartir features a testear con otros testers"
+
+  ANALISTA_FUNCIONAL_2:
+    nombre: "Hypatia de Alejandría"
+    color: "Perla"
+    agente: "functional-analyst-2"
+    mismas_capacidades_que: "ANALISTA_FUNCIONAL"
+    coordinacion: "Repartir épicas/features con otro analista funcional"
 ```
 
 ---

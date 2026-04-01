@@ -61,25 +61,35 @@ claude
 
 El PM leera `CLAUDE.md` y te guiara por todo el proceso: relevamiento, arquitectura, diseno, sprints y deploy.
 
-## Agentes del equipo
+## Agentes del equipo (23 roles)
 
-| Rol | Archivo |
-|-----|---------|
-| PM / Scrum Master | `.claude/agents/project-manager.md` |
-| Analista Funcional | `.claude/agents/functional-analyst.md` |
-| Arquitecto de Software | `.claude/agents/software-architect.md` |
-| Lider Tecnico | `.claude/agents/tech-lead.md` |
-| Dev Frontend | `.claude/agents/frontend-developer.md` |
-| Dev Backend | `.claude/agents/backend-developer.md` |
-| Dev Fullstack | `.claude/agents/fullstack-developer.md` |
-| Especialista Integraciones | `.claude/agents/integrations-specialist.md` |
-| Ingeniero de Datos | `.claude/agents/data-engineer.md` |
-| Cientifico de Datos | `.claude/agents/data-scientist.md` |
-| Tester QA | `.claude/agents/tester.md` |
-| Especialista Seguridad | `.claude/agents/security-specialist.md` |
-| Disenador UI/UX/CX | `.claude/agents/ui-ux-designer.md` |
-| Ingeniero Cloud | `.claude/agents/cloud-engineer.md` |
-| DevOps | `.claude/agents/devops.md` |
+| Rol | Nombre | Archivo |
+|-----|--------|---------|
+| PM / Scrum Master | Alan Turing | `project-manager.md` |
+| Product Owner | Marie Curie | `product-owner.md` |
+| Analista Funcional | Ada Lovelace | `functional-analyst.md` |
+| Analista Funcional 2 | Hypatia de Alejandria | `functional-analyst-2.md` |
+| Arquitecto de Software | Nikola Tesla | `software-architect.md` |
+| Lider Tecnico | Linus Torvalds | `tech-lead.md` |
+| Disenador UI/UX/CX | Leonardo Da Vinci | `ui-ux-designer.md` |
+| Dev Frontend | Grace Hopper | `frontend-developer.md` |
+| Dev Frontend 2 | Katherine Johnson | `frontend-developer-2.md` |
+| Dev Frontend 3 | Emmy Noether | `frontend-developer-3.md` |
+| Dev Backend | Dennis Ritchie | `backend-developer.md` |
+| Dev Backend 2 | John von Neumann | `backend-developer-2.md` |
+| Dev Backend 3 | Blaise Pascal | `backend-developer-3.md` |
+| Dev Fullstack | Tim Berners-Lee | `fullstack-developer.md` |
+| Especialista Integraciones | Claude Shannon | `integrations-specialist.md` |
+| Ingeniero de Datos | Rosalind Franklin | `data-engineer.md` |
+| Cientifico de Datos | Isaac Newton | `data-scientist.md` |
+| Tester QA | Richard Feynman | `tester.md` |
+| Tester QA 2 | Niels Bohr | `tester-2.md` |
+| Tester QA 3 | Dorothy Hodgkin | `tester-3.md` |
+| Especialista Seguridad | Hedy Lamarr | `security-specialist.md` |
+| Ingeniero Cloud | Carl Sagan | `cloud-engineer.md` |
+| DevOps | Margaret Hamilton | `devops.md` |
+
+Todos los archivos estan en `.claude/agents/`.
 
 ## Personalizar permisos
 
