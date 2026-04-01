@@ -41,14 +41,111 @@ git clone https://github.com/VoltAgent/awesome-agent-skills.git awesome-agent-sk
 
 ---
 
+## SETUP AUTOMÁTICO — DETECCIÓN DE PRIMERA VEZ
+
+**ANTES de cualquier otra acción**, el modelo DEBE ejecutar esta checklist de entorno.
+Si TODOS los checks pasan → continuar normalmente.
+Si ALGUNO falla → guiar al usuario paso a paso antes de continuar.
+
+```yaml
+SETUP_CHECKLIST:
+  # Ejecutar estos checks en orden al inicio de CADA sesión.
+  # Solo mostrar al usuario los que fallen.
+
+  1_claude_code:
+    check: "El modelo está corriendo dentro de Claude Code (este check pasa si estás leyendo esto)"
+    si_falla: "Este framework requiere Claude Code. Instalalo desde https://claude.ai/claude-code"
+
+  2_node_js:
+    check: "Ejecutar: node --version"
+    minimo: "v18.0.0"
+    si_falla: |
+      GEN necesita Node.js 18+ para los servidores MCP (Trello, etc).
+      Instalar desde: https://nodejs.org/
+      Después de instalar, reiniciar Claude Code.
+
+  3_env_file:
+    check: "Verificar si existe .env en la raíz del proyecto"
+    si_falla: |
+      Copiar el template: cp .env.example .env
+      Luego editar .env con tus API keys.
+      (Ver tabla de API keys abajo)
+
+  4_composio_api_key:
+    check: "Verificar que COMPOSIO_API_KEY esté configurada en .env (no vacía, no 'tu_api_key_aqui')"
+    es_opcional: true
+    si_falta: |
+      La integración con Trello es opcional pero recomendada.
+      Si querés usarla:
+        1. Crear cuenta en https://app.composio.dev
+        2. Ir a Settings → API Keys → copiar tu key
+        3. Pegarla en .env como: COMPOSIO_API_KEY=ak_xxxxx
+      Si no la necesitás, podemos continuar sin Trello.
+
+  5_skills_repo:
+    check: "Verificar si existe el directorio awesome-agent-skills/"
+    es_opcional: true
+    si_falta: |
+      El repo de skills de VoltAgent es opcional pero potencia a los agentes.
+      ¿Querés que lo clone ahora?
+      Comando: git clone https://github.com/VoltAgent/awesome-agent-skills.git awesome-agent-skills
+
+  6_git_config:
+    check: "Ejecutar: git config user.name && git config user.email"
+    si_falla: |
+      Git necesita saber quién sos para hacer commits:
+        git config user.name "Tu Nombre"
+        git config user.email "tu@email.com"
+```
+
+### Flujo de Setup (primera vez)
+
+```
+AL INICIAR SESIÓN:
+
+1. Ejecutar SETUP_CHECKLIST silenciosamente (no mostrar checks que pasen)
+2. Si TODO pasa → saltar al flujo normal (INSTRUCCIÓN CRÍTICA)
+3. Si algo falla:
+
+   "👋 ¡Bienvenido a GEN! Detecto que es tu primera vez o falta configurar algo.
+    Voy a guiarte paso a paso:
+
+    ❌ [lista de checks fallidos con instrucciones]
+    ✅ [lista de checks que pasaron — una línea cada uno]
+
+    ¿Arrancamos con la configuración?"
+
+4. Para cada check fallido:
+   - Explicar qué es y para qué sirve
+   - Si es opcional → preguntar si quiere configurarlo o saltearlo
+   - Si es obligatorio → no continuar hasta que esté resuelto
+   - Ejecutar comandos automáticamente cuando sea posible (cp, git clone, etc.)
+   - Pedir al usuario solo lo que requiere input manual (API keys, aprobaciones)
+
+5. Cuando todo esté OK:
+   "✅ GEN está listo. ¿Empezamos con tu proyecto?"
+   → Continuar con el flujo normal
+```
+
+### Tabla de API Keys
+
+```
+| Servicio  | Variable          | Obligatoria | URL                                    | Uso                    |
+|-----------|-------------------|-------------|----------------------------------------|------------------------|
+| Composio  | COMPOSIO_API_KEY  | No          | https://app.composio.dev/settings      | Trello (backlog/cards) |
+```
+
+---
+
 ## INSTRUCCIÓN CRÍTICA PARA EL MODELO
 
 Al iniciar, SIEMPRE:
-1. Leer este archivo completo antes de cualquier acción.
-2. Identificar el `ROL_ACTIVO` y el `ESTADO_SPRINT` actuales.
-3. Informar al usuario: *"Retomando proyecto [NOMBRE]. Sprint [N], tarea [ID]. ¿Continuamos?"*
-4. NO generar código ni tomar decisiones sin validación si el estado es `PAUSED` o `PENDING_APPROVAL`.
-5. Actualizar este archivo al final de CADA sesión con el estado actualizado.
+1. **Ejecutar SETUP_CHECKLIST** (sección anterior) — resolver antes de continuar.
+2. Leer este archivo completo antes de cualquier acción.
+3. Identificar el `ROL_ACTIVO` y el `ESTADO_SPRINT` actuales.
+4. Informar al usuario: *"Retomando proyecto [NOMBRE]. Sprint [N], tarea [ID]. ¿Continuamos?"*
+5. NO generar código ni tomar decisiones sin validación si el estado es `PAUSED` o `PENDING_APPROVAL`.
+6. Actualizar este archivo al final de CADA sesión con el estado actualizado.
 
 **LEY FUNDAMENTAL – LOOP ITERATIVO:**
 Ningún entregable avanza a la siguiente fase sin aprobación explícita del usuario.
