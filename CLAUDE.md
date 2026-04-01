@@ -622,7 +622,15 @@ LOOP I – DEMO + VALIDACIÓN
   Demo en Vercel staging → usuario valida feature por feature →
   Rechazadas: vuelven al backlog con feedback → Aceptadas: merge a main
 
-RETROSPECTIVA → documentar en CLAUDE.md → ajustar proceso → próximo sprint
+PRE-CIERRE DE SPRINT (OBLIGATORIO — gate antes del Sprint Review)
+─────────────────────────────────────────────────────
+
+LOOP J – DOCUMENTACIÓN FORMAL (todos los roles)
+  PM verifica que cada rol generó/actualizó su documento en docs/ (ver sección 14)
+  Si falta algún documento → el sprint NO se cierra → PM asigna su creación
+  Todos los docs listos → Sprint Review puede proceder
+
+RETROSPECTIVA → documentar en CLAUDE.md → actualizar lecciones-aprendidas.md → próximo sprint
 ```
 
 ### 6.2 Reglas de Escalamiento
@@ -900,13 +908,185 @@ SEGURIDAD_BASICA:
 ✅ CP-08: Deploy a producción
 ✅ CP-09: Features de seguridad/pagos
 ✅ CP-10: Skills externas no verificadas → Seguridad + usuario aprueban
+✅ CP-11: Auditoría de seguridad del sprint (OBLIGATORIA) → veredicto GO antes de Sprint Review
+          Entregable: .claude/pm-reports/security-audit-sprint[N].md
+✅ CP-12: Product Owner valida features antes del Sprint Review → PO acepta/rechaza contra expectativas
+✅ CP-13: Documentación formal generada → todos los documentos de la sección 14 creados/actualizados antes de cerrar sprint
+          Entregable: projects/[nombre]/docs/ (ver sección 14 para lista completa)
+✅ CP-14: Deployment Guide documentado → `deployment-guide.md` completo y actualizado antes de cerrar sprint con deploy
+          Entregable: projects/[nombre]/docs/deployment-guide.md
+✅ CP-15: Lecciones aprendidas actualizadas → `lecciones-aprendidas.md` actualizado al cierre de cada sprint
+          Entregable: projects/[nombre]/docs/lecciones-aprendidas.md
 
 TODOS los checkpoints son loops. Ninguno se salta. El PM gestiona cada uno.
+La documentación formal (CP-13) es OBLIGATORIA en CADA proyecto. Sin ella, el sprint NO se considera cerrado.
 ```
 
 ---
 
-## 14. SESIÓN ACTUAL
+## 14. DOCUMENTACIÓN FORMAL POR ROL — OBLIGATORIA
+
+Cada rol responsable DEBE generar su documentación formal al cierre de cada sprint.
+Esta documentación NO es opcional. Sin ella, el sprint NO se considera cerrado.
+Los documentos se guardan en `projects/[nombre]/docs/`.
+
+```yaml
+DOCUMENTACION_FORMAL:
+  directorio: "projects/[nombre]/docs/"
+  formato_fuente: ".md"
+  formato_entrega: ".md + .docx (convertir con pandoc si se requiere)"
+  obligatoria: true
+  regla: "El PM NO puede cerrar un sprint sin que todos los documentos estén creados/actualizados"
+  momento: "Al cierre de cada sprint, ANTES del Sprint Review"
+
+  documentos:
+    - archivo: "functional-specification.md"
+      responsable: "Analista Funcional (Ada Lovelace)"
+      cuando: "INCEPTION + actualizar en cada sprint si hay cambios de scope"
+      contenido:
+        - Alcance del proyecto
+        - Requerimientos funcionales y no funcionales
+        - User Stories con criterios de aceptación Gherkin
+        - Integraciones
+        - Procesos, diagramas de flujo
+
+    - archivo: "technical-architecture.md"
+      responsable: "Arquitecto de Software (Nikola Tesla) + Líder Técnico (Linus Torvalds)"
+      cuando: "INCEPTION + actualizar en cada sprint si hay cambios de arquitectura"
+      contenido:
+        - Arquitectura de aplicación y solución general
+        - Diagrama de componentes
+        - Stack tecnológico y justificación
+        - ADRs (Architecture Decision Records)
+        - Solución técnica detallada
+
+    - archivo: "ux-wireframe.md"
+      responsable: "Diseñador UI/UX/CX (Leonardo Da Vinci)"
+      cuando: "INCEPTION + actualizar en cada sprint si hay nuevas pantallas"
+      contenido:
+        - Wireframes de todas las pantallas
+        - Paleta de colores y tipografía
+        - Especificaciones de componentes
+        - Responsive breakpoints
+        - Accesibilidad
+
+    - archivo: "pm-project-plan.md"
+      responsable: "PM / Scrum Master (Alan Turing)"
+      cuando: "INCEPTION + actualizar al cierre de cada sprint"
+      contenido:
+        - Plan de proyecto, riesgos, assumptions
+        - Historias de usuario, capacidad, camino crítico
+        - Sprint reviews y retrospectivas
+        - Lecciones aprendidas acumuladas
+
+    - archivo: "test-report.md"
+      responsable: "Tester QA (Richard Feynman)"
+      cuando: "Al cierre de cada sprint"
+      contenido:
+        - Plan de tests y casos de prueba
+        - Resultados de ejecución
+        - Bugs encontrados y resolución
+        - Cobertura de criterios de aceptación
+
+    - archivo: "security-audit.md"
+      responsable: "Especialista Seguridad (Hedy Lamarr)"
+      cuando: "Al cierre de cada sprint"
+      contenido:
+        - Resumen ejecutivo
+        - Lista de pruebas ejecutadas (OWASP Top 10, secrets, inputs, auth, etc.)
+        - Vulnerabilidades encontradas con severidad
+        - Recomendaciones
+        - Veredicto GO / NO-GO
+
+    - archivo: "deployment-guide.md"
+      responsable: "Ingeniero Cloud (Carl Sagan) + DevOps (Margaret Hamilton)"
+      cuando: "En el primer deploy + actualizar en cada cambio de infraestructura"
+      contenido:
+        - Arquitectura de deploy (qué servicio corre dónde)
+        - Paso a paso para cada plataforma
+        - Variables de entorno necesarias
+        - Comandos exactos de deploy
+        - Archivos de configuración requeridos
+        - URLs de producción, dashboards, health checks
+        - Troubleshooting de problemas comunes
+        - Checklist pre-deploy
+      regla: "OBLIGATORIO en todo proyecto con deploy. Sin esto, el deploy NO está completo."
+
+    - archivo: "data-architecture.md"
+      responsable: "Ingeniero de Datos (Rosalind Franklin)"
+      cuando: "Si el proyecto tiene base de datos o pipelines de datos"
+      contenido:
+        - Diagrama de base de datos / DER
+        - ETL si aplica
+        - Modelo de datos
+
+    - archivo: "infrastructure-deployment.md"
+      responsable: "Ingeniero Cloud (Carl Sagan) + DevOps (Margaret Hamilton)"
+      cuando: "Si el proyecto tiene infraestructura cloud"
+      contenido:
+        - Arquitectura cloud
+        - Diagrama de despliegue
+        - Componentes de infraestructura
+        - Pipelines CI/CD
+
+    - archivo: "lecciones-aprendidas.md"
+      responsable: "PM / Scrum Master (Alan Turing)"
+      cuando: "Actualizar al cierre de cada sprint"
+      contenido:
+        - Problemas encontrados y cómo se resolvieron
+        - Bugs recurrentes y sus patrones
+        - Decisiones técnicas que salieron bien o mal
+        - Checklist derivado de la experiencia
+
+  reportes_internos:
+    directorio: ".claude/pm-reports/"
+    descripcion: "Reportes de sprint de cada agente — uso interno del equipo GEN"
+    archivos_tipicos:
+      - "functional-analyst-report.md"
+      - "software-architect-report.md"
+      - "tech-lead-report.md"
+      - "tech-lead-review-sprint[N].md"
+      - "dev-frontend-report.md"
+      - "backend-developer-report.md"
+      - "tester-report-sprint[N].md"
+      - "tester-plan-sprint[N].md"
+      - "security-audit-sprint[N].md"
+      - "ui-ux-designer-report.md"
+      - "devops-sprint[N]-report.md"
+      - "pm-sprint-[N]-planning.md"
+    regla: "Cada agente genera su reporte al completar sus tareas del sprint"
+
+  formato_word:
+    directorio: "projects/[nombre]/docs/formal/word/"
+    cuando: "Solo cuando el usuario lo solicite explícitamente"
+    comando: "pandoc archivo.md -o archivo.docx"
+```
+
+### 14.1 Flujo de Documentación en el Sprint
+
+```
+SPRINT EXECUTION
+  ├── Cada agente trabaja sus tareas normalmente
+  └── Al completar → genera/actualiza su documento en docs/
+
+PRE-SPRINT REVIEW (OBLIGATORIO — gate antes de cerrar sprint)
+  PM verifica que TODOS los documentos existen y están actualizados:
+  ├── functional-specification.md    (Analista Funcional)
+  ├── technical-architecture.md      (Arquitecto + Líder Técnico)
+  ├── ux-wireframe.md                (UX Designer)
+  ├── pm-project-plan.md             (PM)
+  ├── test-report.md                 (Tester QA)
+  ├── security-audit.md              (Seguridad)
+  ├── deployment-guide.md            (Cloud + DevOps) — si hay deploy
+  ├── lecciones-aprendidas.md        (PM)
+  └── data-architecture.md           (Datos) — si aplica
+
+  Si falta algún documento → el sprint NO se cierra → PM asigna su creación.
+```
+
+---
+
+## 15. SESIÓN ACTUAL
 
 ```yaml
 SESION_ACTUAL:
@@ -941,7 +1121,7 @@ SESION_ACTUAL:
 
 ---
 
-## 15. REANUDACIÓN TRAS INTERRUPCIÓN
+## 16. REANUDACIÓN TRAS INTERRUPCIÓN
 
 ```
 SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
@@ -968,7 +1148,7 @@ SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
 
 ---
 
-## 16. PRIMER USO – SECUENCIA DE INICIO
+## 17. PRIMER USO – SECUENCIA DE INICIO
 
 ```
 Si fase_actual = "INCEPTION" y sprint_actual = 0:
@@ -1001,7 +1181,7 @@ PASO 9: 🚀 Desarrollo comienza
 
 ---
 
-*Versión: 2.0.0*
+*Versión: 2.1.0*
 *Skills source: https://github.com/VoltAgent/awesome-agent-skills.git*
 *Principio rector: Iterar indefinidamente hasta aprobación. La calidad no tiene atajos.*
 *Fuente de verdad única del proyecto – actualizar al inicio y fin de cada sesión.*
