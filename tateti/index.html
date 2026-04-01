@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tateti - GEN</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+h1{font-size:36px;text-transform:uppercase;letter-spacing:8px;margin-bottom:24px;font-weight:700}
+#status{font-size:18px;margin-bottom:20px;min-height:28px;transition:opacity .3s}
+#status.fade{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.color-x{color:#00d2ff}
+.color-o{color:#ff00aa}
+#board{display:grid;grid-template-columns:repeat(3,100px);grid-template-rows:repeat(3,100px);gap:4px;margin-bottom:24px}
+.cell{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:8px;font-size:40px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:box-shadow .2s,border-color .2s;outline:none}
+.cell:hover:not(.taken){box-shadow:0 0 15px rgba(255,255,255,.1)}
+.cell:focus-visible{outline:2px solid #00d2ff;outline-offset:2px}
+.cell.x{color:#00d2ff;text-shadow:0 0 10px rgba(0,210,255,.5)}
+.cell.o{color:#ff00aa;text-shadow:0 0 10px rgba(255,0,170,.5)}
+.cell.win-x{border-color:#00d2ff;box-shadow:0 0 20px rgba(0,210,255,.6)}
+.cell.win-o{border-color:#ff00aa;box-shadow:0 0 20px rgba(255,0,170,.6)}
+#scoreboard{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:20px;display:flex;gap:16px}
+#btn-reset{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:10px 24px;font-size:16px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+#btn-reset:hover,#btn-reset:focus-visible{border-color:#00d2ff;box-shadow:0 0 12px rgba(0,210,255,.3)}
+#btn-reset:focus-visible{outline:2px solid #00d2ff;outline-offset:2px}
+@media(max-width:767px){#board{grid-template-columns:repeat(3,90px);grid-template-rows:repeat(3,90px)}}
+@media(max-width:359px){#board{grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px)}.cell{font-size:32px}}
+</style>
+</head>
+<body>
+<h1>Tateti</h1>
+<div id="status" aria-live="polite"></div>
+<div id="board" role="group" aria-label="Tablero de Tateti"></div>
+<div id="scoreboard">
+  <span><span class="color-x">X</span>: <span id="sx">0</span></span>
+  <span>Empates: <span id="sd">0</span></span>
+  <span><span class="color-o">O</span>: <span id="so">0</span></span>
+</div>
+<button id="btn-reset">Nueva Partida</button>
+<script>
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let board,turn,over,score={X:0,O:0,D:0};
+const $board=document.getElementById('board'),
+      $status=document.getElementById('status');
+
+function init(){
+  board=Array(9).fill('');turn='X';over=false;
+  $board.innerHTML='';
+  for(let i=0;i<9;i++){
+    const c=document.createElement('div');
+    c.className='cell';c.tabIndex=0;c.dataset.i=i;
+    c.setAttribute('role','button');
+    c.setAttribute('aria-label',`Celda ${Math.floor(i/3)+1},${i%3+1} vacia`);
+    c.addEventListener('click',()=>play(i));
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();play(i)}});
+    $board.appendChild(c);
+  }
+  showTurn();
+}
+
+function showTurn(){
+  $status.className='';
+  $status.innerHTML=`Turno de: <span class="color-${turn.toLowerCase()}">${turn}</span>`;
+}
+
+function play(i){
+  if(over||board[i])return;
+  board[i]=turn;
+  const c=$board.children[i];
+  c.textContent=turn;c.classList.add(turn.toLowerCase(),'taken');
+  c.setAttribute('aria-label',`Celda ${Math.floor(i/3)+1},${i%3+1} ${turn}`);
+  const w=checkWin();
+  if(w){
+    over=true;
+    w.forEach(j=>$board.children[j].classList.add('win-'+turn.toLowerCase()));
+    score[turn]++;updateScore();
+    $status.className='fade';
+    $status.innerHTML=`<span class="color-${turn.toLowerCase()}" style="font-size:24px;font-weight:700">${turn} gana!</span>`;
+  }else if(board.every(v=>v)){
+    over=true;score.D++;updateScore();
+    $status.className='fade';
+    $status.innerHTML='<span style="font-size:24px;font-weight:700">Empate!</span>';
+  }else{turn=turn==='X'?'O':'X';showTurn()}
+}
+
+function checkWin(){for(const l of WINS)if(l.every(i=>board[i]===turn))return l;return null}
+function updateScore(){document.getElementById('sx').textContent=score.X;document.getElementById('so').textContent=score.O;document.getElementById('sd').textContent=score.D}
+
+document.getElementById('btn-reset').addEventListener('click',init);
+init();
+</script>
+</body>
+</html>
