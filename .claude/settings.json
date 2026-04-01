@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "composio-trello": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@composio/mcp@latest",
+        "--tools=trello"
+      ],
+      "env": {
+        "COMPOSIO_API_KEY": "${COMPOSIO_API_KEY}"
+      }
+    }
+  }
+}
