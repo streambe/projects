@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  surveys   Survey[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Survey {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  slug        String     @unique
+  isActive    Boolean    @default(false)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  responses   Response[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id         String       @id @default(cuid())
+  text       String
+  type       QuestionType
+  isRequired Boolean      @default(false)
+  order      Int
+  surveyId   String
+  survey     Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  options    Option[]
+  answers    Answer[]
+  createdAt  DateTime     @default(now())
+}
+
+enum QuestionType {
+  TEXT
+  MULTIPLE_CHOICE
+  SCALE
+  YES_NO
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  text       String
+  order      Int
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  surveyId  String
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+  createdAt DateTime @default(now())
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  value      String
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
