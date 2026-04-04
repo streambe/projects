@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function PATCH(
@@ -16,14 +16,14 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const enrollment = await prisma.sequenceEnrollment.findUnique({
-      where: { id },
-      include: {
-        sequence: { include: { steps: { orderBy: { order: "asc" } } } },
-      },
-    });
+    // Fetch enrollment with sequence steps
+    const { data: enrollment, error: findError } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .select("*, sequence:Sequence(*, steps:SequenceStep(*))")
+      .eq("id", id)
+      .single();
 
-    if (!enrollment) {
+    if (findError || !enrollment) {
       return NextResponse.json(
         { error: "Enrollment not found", code: "NOT_FOUND" },
         { status: 404 }
@@ -40,7 +40,7 @@ export async function PATCH(
     }
 
     const updateData: Record<string, unknown> = {};
-    const steps = enrollment.sequence.steps;
+    const steps = (enrollment.sequence.steps ?? []).sort((a: { order: number }, b: { order: number }) => a.order - b.order);
 
     switch (action) {
       case "pause": {
@@ -65,7 +65,7 @@ export async function PATCH(
         const currentStepDef = steps[enrollment.currentStep];
         if (currentStepDef) {
           const now = new Date();
-          updateData.nextActionAt = new Date(now.getTime() + currentStepDef.delayDays * 24 * 60 * 60 * 1000);
+          updateData.nextActionAt = new Date(now.getTime() + currentStepDef.delayDays * 24 * 60 * 60 * 1000).toISOString();
         }
         updateData.status = "ACTIVE";
         break;
@@ -80,7 +80,7 @@ export async function PATCH(
         }
         updateData.status = "CANCELLED";
         updateData.nextActionAt = null;
-        updateData.completedAt = new Date();
+        updateData.completedAt = new Date().toISOString();
         break;
       }
 
@@ -96,29 +96,33 @@ export async function PATCH(
         const nextStepIndex = enrollment.currentStep + 1;
 
         if (nextStepIndex >= steps.length) {
-          // Sequence complete
           updateData.status = "COMPLETED";
           updateData.currentStep = nextStepIndex;
           updateData.nextActionAt = null;
-          updateData.completedAt = new Date();
+          updateData.completedAt = new Date().toISOString();
         } else {
           const nextStep = steps[nextStepIndex];
           const now = new Date();
           updateData.currentStep = nextStepIndex;
-          updateData.nextActionAt = new Date(now.getTime() + nextStep.delayDays * 24 * 60 * 60 * 1000);
+          updateData.nextActionAt = new Date(now.getTime() + nextStep.delayDays * 24 * 60 * 60 * 1000).toISOString();
         }
         break;
       }
     }
 
-    const updated = await prisma.sequenceEnrollment.update({
-      where: { id },
-      data: updateData,
-      include: {
-        lead: { include: { company: true } },
-        sequence: { include: { steps: { orderBy: { order: "asc" } } } },
-      },
-    });
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .update(updateData)
+      .eq("id", id)
+      .select("*, lead:Lead(*, company:Company(*)), sequence:Sequence(*, steps:SequenceStep(*))")
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Sort steps in the response
+    if (updated?.sequence?.steps) {
+      updated.sequence.steps.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

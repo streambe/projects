@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { parseCsv } from "@/lib/csv-parser";
 import { applyMapping, type ColumnMapping, type ImportResult } from "@/lib/import-utils";
 import { calculateScore } from "@/lib/scoring";
@@ -52,14 +52,17 @@ export async function POST(request: NextRequest) {
     for (const lead of mappedLeads) {
       // Check duplicates by email or linkedinUrl
       if (lead.email || lead.linkedinUrl) {
-        const existing = await prisma.lead.findFirst({
-          where: {
-            OR: [
-              ...(lead.email ? [{ email: lead.email }] : []),
-              ...(lead.linkedinUrl ? [{ linkedinUrl: lead.linkedinUrl }] : []),
-            ],
-          },
-        });
+        const orConditions = [];
+        if (lead.email) orConditions.push(`email.eq.${lead.email}`);
+        if (lead.linkedinUrl) orConditions.push(`linkedinUrl.eq.${lead.linkedinUrl}`);
+
+        const { data: existing } = await supabaseAdmin
+          .from("Lead")
+          .select("id")
+          .or(orConditions.join(","))
+          .limit(1)
+          .single();
+
         if (existing) {
           skipped++;
           continue;
@@ -69,24 +72,31 @@ export async function POST(request: NextRequest) {
       // Find or create company
       let companyId: string | undefined;
       if (lead.company) {
-        const existingCompany = await prisma.company.findFirst({
-          where: { name: { equals: lead.company, mode: "insensitive" } },
-        });
+        const { data: existingCompany } = await supabaseAdmin
+          .from("Company")
+          .select("id")
+          .ilike("name", lead.company)
+          .limit(1)
+          .single();
+
         if (existingCompany) {
           companyId = existingCompany.id;
         } else {
-          const newCompany = await prisma.company.create({
-            data: {
+          const { data: newCompany } = await supabaseAdmin
+            .from("Company")
+            .insert({
               name: lead.company,
               industry: lead.industry || null,
-            },
-          });
-          companyId = newCompany.id;
+            })
+            .select("id")
+            .single();
+          companyId = newCompany?.id;
         }
       }
 
-      const created = await prisma.lead.create({
-        data: {
+      const { data: created } = await supabaseAdmin
+        .from("Lead")
+        .insert({
           firstName: lead.firstName,
           lastName: lead.lastName,
           title: lead.title || null,
@@ -94,18 +104,20 @@ export async function POST(request: NextRequest) {
           phone: lead.phone || null,
           linkedinUrl: lead.linkedinUrl || null,
           companyId: companyId || null,
-        },
-        include: { company: true, activities: true },
-      });
+        })
+        .select("*, company:Company(*), activities:Activity(*)")
+        .single();
 
-      // Calculate initial score
-      const { total, demographic, behavioral } = calculateScore(created);
-      await prisma.lead.update({
-        where: { id: created.id },
-        data: { score: total, scoreDemographic: demographic, scoreBehavioral: behavioral },
-      });
+      if (created) {
+        // Calculate initial score
+        const { total, demographic, behavioral } = calculateScore(created);
+        await supabaseAdmin
+          .from("Lead")
+          .update({ score: total, scoreDemographic: demographic, scoreBehavioral: behavioral })
+          .eq("id", created.id);
 
-      imported++;
+        imported++;
+      }
     }
 
     const result: ImportResult = { imported, skipped, errors };

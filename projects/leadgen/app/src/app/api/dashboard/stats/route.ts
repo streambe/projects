@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { labelForScore } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth";
 
@@ -14,50 +15,40 @@ export async function GET() {
 
     // Run independent queries in parallel
     const [
-      totalLeads,
-      newThisWeek,
-      allLeads,
-      wonCount,
-      recentActivities,
-      todayEnrollments,
+      totalLeadsRes,
+      newThisWeekRes,
+      allLeadsRes,
+      wonCountRes,
+      recentActivitiesRes,
+      todayEnrollmentsRes,
     ] = await Promise.all([
-      prisma.lead.count(),
-      prisma.lead.count({ where: { createdAt: { gte: weekAgo } } }),
-      prisma.lead.findMany({
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          score: true,
-          stage: true,
-          title: true,
-          company: { select: { name: true } },
-        },
-        orderBy: { score: "desc" },
-      }),
-      prisma.lead.count({ where: { stage: "WON" } }),
-      prisma.activity.findMany({
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: {
-          lead: { select: { firstName: true, lastName: true } },
-          user: { select: { name: true } },
-        },
-      }),
-      prisma.sequenceEnrollment.findMany({
-        where: {
-          status: "ACTIVE",
-          nextActionAt: { gte: todayStart, lt: todayEnd },
-        },
-        include: {
-          lead: {
-            select: { id: true, firstName: true, lastName: true, score: true },
-          },
-          sequence: { select: { name: true } },
-        },
-        take: 20,
-      }),
+      supabaseAdmin.from("Lead").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("Lead").select("id", { count: "exact", head: true }).gte("createdAt", weekAgo.toISOString()),
+      supabaseAdmin
+        .from("Lead")
+        .select("id, firstName, lastName, score, stage, title, company:Company(name)")
+        .order("score", { ascending: false }),
+      supabaseAdmin.from("Lead").select("id", { count: "exact", head: true }).eq("stage", "WON"),
+      supabaseAdmin
+        .from("Activity")
+        .select("id, type, subject, createdAt, lead:Lead(firstName, lastName), user:User(name)")
+        .order("createdAt", { ascending: false })
+        .limit(20),
+      supabaseAdmin
+        .from("SequenceEnrollment")
+        .select("id, currentStep, nextActionAt, lead:Lead(id, firstName, lastName, score), sequence:Sequence(name)")
+        .eq("status", "ACTIVE")
+        .gte("nextActionAt", todayStart.toISOString())
+        .lt("nextActionAt", todayEnd.toISOString())
+        .limit(20),
     ]);
+
+    const totalLeads = totalLeadsRes.count ?? 0;
+    const newThisWeek = newThisWeekRes.count ?? 0;
+    const allLeads = (allLeadsRes.data ?? []) as any[];
+    const wonCount = wonCountRes.count ?? 0;
+    const recentActivities = (recentActivitiesRes.data ?? []) as any[];
+    const todayEnrollments = (todayEnrollmentsRes.data ?? []) as any[];
 
     // Compute distributions
     const byStage: Record<string, number> = {};

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(
@@ -16,7 +16,6 @@ export async function POST(
     const { id: sequenceId } = await params;
     const body = await request.json();
 
-    // Accept single leadId or array of leadIds
     const leadIds: string[] = Array.isArray(body.leadIds)
       ? body.leadIds
       : body.leadId
@@ -30,12 +29,13 @@ export async function POST(
       );
     }
 
-    const sequence = await prisma.sequence.findUnique({
-      where: { id: sequenceId },
-      include: { steps: { orderBy: { order: "asc" } } },
-    });
+    const { data: sequence, error: seqError } = await supabaseAdmin
+      .from("Sequence")
+      .select("*, steps:SequenceStep(*)")
+      .eq("id", sequenceId)
+      .single();
 
-    if (!sequence) {
+    if (seqError || !sequence) {
       return NextResponse.json(
         { error: "Sequence not found", code: "NOT_FOUND" },
         { status: 404 }
@@ -49,7 +49,9 @@ export async function POST(
       );
     }
 
-    if (sequence.steps.length === 0) {
+    const steps = (sequence.steps ?? []).sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+
+    if (steps.length === 0) {
       return NextResponse.json(
         { error: "Sequence has no steps", code: "NO_STEPS" },
         { status: 400 }
@@ -57,15 +59,14 @@ export async function POST(
     }
 
     // Check for existing active enrollments
-    const existingEnrollments = await prisma.sequenceEnrollment.findMany({
-      where: {
-        sequenceId,
-        leadId: { in: leadIds },
-        status: "ACTIVE",
-      },
-    });
+    const { data: existingEnrollments } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .select("leadId")
+      .eq("sequenceId", sequenceId)
+      .in("leadId", leadIds)
+      .eq("status", "ACTIVE");
 
-    const alreadyEnrolled = new Set(existingEnrollments.map((e) => e.leadId));
+    const alreadyEnrolled = new Set((existingEnrollments ?? []).map((e) => e.leadId));
     const toEnroll = leadIds.filter((id) => !alreadyEnrolled.has(id));
 
     if (toEnroll.length === 0) {
@@ -75,27 +76,24 @@ export async function POST(
       );
     }
 
-    const firstStep = sequence.steps[0];
+    const firstStep = steps[0];
     const now = new Date();
     const nextActionAt = new Date(now.getTime() + firstStep.delayDays * 24 * 60 * 60 * 1000);
 
-    const enrollments = await Promise.all(
-      toEnroll.map((leadId) =>
-        prisma.sequenceEnrollment.create({
-          data: {
-            sequenceId,
-            leadId,
-            currentStep: 0,
-            status: "ACTIVE",
-            nextActionAt,
-          },
-          include: {
-            lead: { include: { company: true } },
-            sequence: true,
-          },
-        })
-      )
-    );
+    const enrollmentsToInsert = toEnroll.map((leadId) => ({
+      sequenceId,
+      leadId,
+      currentStep: 0,
+      status: "ACTIVE",
+      nextActionAt: nextActionAt.toISOString(),
+    }));
+
+    const { data: enrollments, error: insertError } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .insert(enrollmentsToInsert)
+      .select("*, lead:Lead(*, company:Company(*)), sequence:Sequence(*)");
+
+    if (insertError) throw insertError;
 
     return NextResponse.json(
       {

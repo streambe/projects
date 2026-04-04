@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateScore } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth";
 
@@ -15,29 +15,24 @@ export async function GET(request: NextRequest) {
     const scoreMax = searchParams.get("scoreMax");
     const assignedToId = searchParams.get("assignedToId");
 
-    const where: Record<string, unknown> = {};
+    let query = supabaseAdmin
+      .from("Lead")
+      .select("*, company:Company(*), assignedTo:User!Lead_assignedToId_fkey(*)")
+      .order("createdAt", { ascending: false });
 
-    if (stage) where.stage = stage;
-    if (assignedToId) where.assignedToId = assignedToId;
-    if (scoreMin || scoreMax) {
-      where.score = {};
-      if (scoreMin) (where.score as Record<string, number>).gte = Number(scoreMin);
-      if (scoreMax) (where.score as Record<string, number>).lte = Number(scoreMax);
-    }
+    if (stage) query = query.eq("stage", stage);
+    if (assignedToId) query = query.eq("assignedToId", assignedToId);
+    if (scoreMin) query = query.gte("score", Number(scoreMin));
+    if (scoreMax) query = query.lte("score", Number(scoreMax));
     if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { company: { name: { contains: search, mode: "insensitive" } } },
-      ];
+      query = query.or(
+        `firstName.ilike.%${search}%,lastName.ilike.%${search}%,email.ilike.%${search}%`
+      );
     }
 
-    const leads = await prisma.lead.findMany({
-      where,
-      include: { company: true, assignedTo: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: leads, error } = await query;
+
+    if (error) throw error;
     return NextResponse.json(leads);
   } catch (error) {
     console.error("Failed to fetch leads:", error);
@@ -55,7 +50,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Whitelist allowed fields to prevent mass assignment
     const allowed = {
       firstName: body.firstName,
       lastName: body.lastName,
@@ -77,19 +71,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the lead first
-    const created = await prisma.lead.create({
-      data: allowed,
-      include: { company: true, activities: true },
-    });
+    // Create the lead
+    const { data: created, error: createError } = await supabaseAdmin
+      .from("Lead")
+      .insert(allowed)
+      .select("*, company:Company(*), activities:Activity(*)")
+      .single();
+
+    if (createError) throw createError;
 
     // Calculate initial score
     const { total, demographic, behavioral } = calculateScore(created);
-    const lead = await prisma.lead.update({
-      where: { id: created.id },
-      data: { score: total, scoreDemographic: demographic, scoreBehavioral: behavioral },
-      include: { company: true, assignedTo: true },
-    });
+    const { data: lead, error: updateError } = await supabaseAdmin
+      .from("Lead")
+      .update({ score: total, scoreDemographic: demographic, scoreBehavioral: behavioral })
+      .eq("id", created.id)
+      .select("*, company:Company(*), assignedTo:User!Lead_assignedToId_fkey(*)")
+      .single();
+
+    if (updateError) throw updateError;
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
@@ -116,14 +116,20 @@ export async function PATCH(request: NextRequest) {
     }
     const body = await request.json();
 
-    // Whitelist allowed fields for update
     const allowed: Record<string, unknown> = {};
     const updateableFields = ["firstName", "lastName", "email", "phone", "title", "linkedinUrl", "stage", "source", "tags", "companyId", "assignedToId"];
     for (const field of updateableFields) {
       if (body[field] !== undefined) allowed[field] = body[field];
     }
 
-    const lead = await prisma.lead.update({ where: { id }, data: allowed });
+    const { data: lead, error } = await supabaseAdmin
+      .from("Lead")
+      .update(allowed)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
     return NextResponse.json(lead);
   } catch (error) {
     console.error("Failed to update lead:", error);

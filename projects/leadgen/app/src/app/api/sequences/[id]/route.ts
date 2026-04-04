@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
@@ -15,29 +15,33 @@ export async function GET(
 
     const { id } = await params;
 
-    const sequence = await prisma.sequence.findUnique({
-      where: { id },
-      include: {
-        steps: {
-          orderBy: { order: "asc" },
-          include: { template: true },
-        },
-        _count: {
-          select: {
-            enrollments: { where: { status: "ACTIVE" } },
-          },
-        },
-      },
-    });
+    const { data: sequence, error } = await supabaseAdmin
+      .from("Sequence")
+      .select("*, steps:SequenceStep(*, template:Template(*))")
+      .eq("id", id)
+      .single();
 
-    if (!sequence) {
+    if (error || !sequence) {
       return NextResponse.json(
         { error: "Sequence not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(sequence);
+    // Sort steps and add enrollment count
+    const { count } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .select("id", { count: "exact", head: true })
+      .eq("sequenceId", id)
+      .eq("status", "ACTIVE");
+
+    const result = {
+      ...sequence,
+      steps: (sequence.steps ?? []).sort((a: { order: number }, b: { order: number }) => a.order - b.order),
+      _count: { enrollments: count ?? 0 },
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to fetch sequence:", error);
     return NextResponse.json(
@@ -61,8 +65,13 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await prisma.sequence.findUnique({ where: { id } });
-    if (!existing) {
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from("Sequence")
+      .select("id")
+      .eq("id", id)
+      .single();
+
+    if (findError || !existing) {
       return NextResponse.json(
         { error: "Sequence not found", code: "NOT_FOUND" },
         { status: 404 }
@@ -74,28 +83,48 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
-    // If steps are provided, replace all steps
-    if (Array.isArray(body.steps)) {
-      await prisma.sequenceStep.deleteMany({ where: { sequenceId: id } });
-      updateData.steps = {
-        create: body.steps.map((step: { channel: string; templateId?: string; delayDays?: number; subject?: string; content?: string }, index: number) => ({
-          order: index,
-          channel: step.channel,
-          templateId: step.templateId || null,
-          delayDays: step.delayDays ?? 0,
-          subject: step.subject || null,
-          content: step.content || null,
-        })),
-      };
+    // Update sequence fields
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await supabaseAdmin
+        .from("Sequence")
+        .update(updateData)
+        .eq("id", id);
+      if (updateError) throw updateError;
     }
 
-    const sequence = await prisma.sequence.update({
-      where: { id },
-      data: updateData,
-      include: { steps: { orderBy: { order: "asc" } } },
-    });
+    // If steps are provided, replace all steps
+    if (Array.isArray(body.steps)) {
+      await supabaseAdmin
+        .from("SequenceStep")
+        .delete()
+        .eq("sequenceId", id);
 
-    return NextResponse.json(sequence);
+      const stepsToInsert = body.steps.map((step: { channel: string; templateId?: string; delayDays?: number; subject?: string; content?: string }, index: number) => ({
+        sequenceId: id,
+        order: index,
+        channel: step.channel,
+        templateId: step.templateId || null,
+        delayDays: step.delayDays ?? 0,
+        subject: step.subject || null,
+        content: step.content || null,
+      }));
+
+      await supabaseAdmin.from("SequenceStep").insert(stepsToInsert);
+    }
+
+    // Return updated sequence with steps
+    const { data: sequence } = await supabaseAdmin
+      .from("Sequence")
+      .select("*, steps:SequenceStep(*)")
+      .eq("id", id)
+      .single();
+
+    const result = {
+      ...sequence,
+      steps: (sequence?.steps ?? []).sort((a: { order: number }, b: { order: number }) => a.order - b.order),
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to update sequence:", error);
     return NextResponse.json(
@@ -118,25 +147,14 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const sequence = await prisma.sequence.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            enrollments: { where: { status: "ACTIVE" } },
-          },
-        },
-      },
-    });
+    // Check for active enrollments
+    const { count } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .select("id", { count: "exact", head: true })
+      .eq("sequenceId", id)
+      .eq("status", "ACTIVE");
 
-    if (!sequence) {
-      return NextResponse.json(
-        { error: "Sequence not found", code: "NOT_FOUND" },
-        { status: 404 }
-      );
-    }
-
-    if (sequence._count.enrollments > 0) {
+    if ((count ?? 0) > 0) {
       return NextResponse.json(
         {
           error: "Cannot delete sequence with active enrollments",
@@ -146,7 +164,24 @@ export async function DELETE(
       );
     }
 
-    await prisma.sequence.delete({ where: { id } });
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from("Sequence")
+      .select("id")
+      .eq("id", id)
+      .single();
+
+    if (findError || !existing) {
+      return NextResponse.json(
+        { error: "Sequence not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    // Delete steps first, then sequence
+    await supabaseAdmin.from("SequenceStep").delete().eq("sequenceId", id);
+    const { error } = await supabaseAdmin.from("Sequence").delete().eq("id", id);
+    if (error) throw error;
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete sequence:", error);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function PATCH(
@@ -16,25 +16,33 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await prisma.template.findUnique({ where: { id } });
-    if (!existing) {
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from("Template")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (findError || !existing) {
       return NextResponse.json(
         { error: "Template not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    const template = await prisma.template.update({
-      where: { id },
-      data: {
+    const { data: template, error } = await supabaseAdmin
+      .from("Template")
+      .update({
         name: body.name ?? existing.name,
         channel: body.channel ?? existing.channel,
         subject: body.subject !== undefined ? body.subject : existing.subject,
         content: body.content ?? existing.content,
         variables: body.variables ?? existing.variables,
-      },
-    });
+      })
+      .eq("id", id)
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json(template);
   } catch (error) {
     console.error("Failed to update template:", error);
@@ -58,15 +66,25 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const existing = await prisma.template.findUnique({ where: { id } });
-    if (!existing) {
+    const { data: existing, error: findError } = await supabaseAdmin
+      .from("Template")
+      .select("id")
+      .eq("id", id)
+      .single();
+
+    if (findError || !existing) {
       return NextResponse.json(
         { error: "Template not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    await prisma.template.delete({ where: { id } });
+    const { error } = await supabaseAdmin
+      .from("Template")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete template:", error);

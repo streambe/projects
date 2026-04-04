@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -10,18 +10,32 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sequences = await prisma.sequence.findMany({
-      include: {
-        steps: { orderBy: { order: "asc" } },
-        _count: {
-          select: {
-            enrollments: { where: { status: "ACTIVE" } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return NextResponse.json(sequences);
+    // Fetch sequences with steps
+    const { data: sequences, error } = await supabaseAdmin
+      .from("Sequence")
+      .select("*, steps:SequenceStep(*)")
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
+
+    // Sort steps by order and add active enrollment count
+    const enriched = await Promise.all(
+      (sequences ?? []).map(async (seq) => {
+        const { count } = await supabaseAdmin
+          .from("SequenceEnrollment")
+          .select("id", { count: "exact", head: true })
+          .eq("sequenceId", seq.id)
+          .eq("status", "ACTIVE");
+
+        return {
+          ...seq,
+          steps: (seq.steps ?? []).sort((a: { order: number }, b: { order: number }) => a.order - b.order),
+          _count: { enrollments: count ?? 0 },
+        };
+      })
+    );
+
+    return NextResponse.json(enriched);
   } catch (error) {
     console.error("Failed to fetch sequences:", error);
     return NextResponse.json(
@@ -70,26 +84,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const sequence = await prisma.sequence.create({
-      data: {
+    // Create sequence
+    const { data: sequence, error: seqError } = await supabaseAdmin
+      .from("Sequence")
+      .insert({
         name: body.name,
         description: body.description || null,
         isActive: body.isActive ?? true,
-        steps: {
-          create: body.steps.map((step: { channel: string; templateId?: string; delayDays?: number; subject?: string; content?: string }, index: number) => ({
-            order: index,
-            channel: step.channel,
-            templateId: step.templateId || null,
-            delayDays: step.delayDays ?? 0,
-            subject: step.subject || null,
-            content: step.content || null,
-          })),
-        },
-      },
-      include: { steps: { orderBy: { order: "asc" } } },
-    });
+      })
+      .select()
+      .single();
 
-    return NextResponse.json(sequence, { status: 201 });
+    if (seqError) throw seqError;
+
+    // Create steps
+    const stepsToInsert = body.steps.map((step: { channel: string; templateId?: string; delayDays?: number; subject?: string; content?: string }, index: number) => ({
+      sequenceId: sequence.id,
+      order: index,
+      channel: step.channel,
+      templateId: step.templateId || null,
+      delayDays: step.delayDays ?? 0,
+      subject: step.subject || null,
+      content: step.content || null,
+    }));
+
+    const { data: steps, error: stepsError } = await supabaseAdmin
+      .from("SequenceStep")
+      .insert(stepsToInsert)
+      .select()
+      .order("order", { ascending: true });
+
+    if (stepsError) throw stepsError;
+
+    return NextResponse.json({ ...sequence, steps }, { status: 201 });
   } catch (error) {
     console.error("Failed to create sequence:", error);
     return NextResponse.json(

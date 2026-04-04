@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -13,24 +13,21 @@ export async function GET() {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    const enrollments = await prisma.sequenceEnrollment.findMany({
-      where: {
-        status: "ACTIVE",
-        nextActionAt: { lte: endOfToday },
-      },
-      include: {
-        lead: { include: { company: true } },
-        sequence: {
-          include: {
-            steps: {
-              orderBy: { order: "asc" },
-              include: { template: true },
-            },
-          },
-        },
-      },
-      orderBy: { nextActionAt: "asc" },
-    });
+    const { data: enrollments, error } = await supabaseAdmin
+      .from("SequenceEnrollment")
+      .select("*, lead:Lead(*, company:Company(*)), sequence:Sequence(*, steps:SequenceStep(*, template:Template(*)))")
+      .eq("status", "ACTIVE")
+      .lte("nextActionAt", endOfToday.toISOString())
+      .order("nextActionAt", { ascending: true });
+
+    if (error) throw error;
+
+    // Sort steps in each enrollment
+    for (const enrollment of (enrollments ?? [])) {
+      if (enrollment.sequence?.steps) {
+        enrollment.sequence.steps.sort((a: { order: number }, b: { order: number }) => a.order - b.order);
+      }
+    }
 
     return NextResponse.json(enrollments);
   } catch (error) {

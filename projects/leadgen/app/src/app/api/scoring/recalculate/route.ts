@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateScore } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth";
 
@@ -7,13 +7,16 @@ export async function POST() {
   try {
     const { error: authError } = await requireAuth();
     if (authError) return authError;
-    const leads = await prisma.lead.findMany({
-      include: { company: true, activities: true },
-    });
+
+    const { data: leads, error } = await supabaseAdmin
+      .from("Lead")
+      .select("*, company:Company(*), activities:Activity(*)");
+
+    if (error) throw error;
 
     let updated = 0;
 
-    for (const lead of leads) {
+    for (const lead of (leads ?? [])) {
       const { total, demographic, behavioral } = calculateScore(lead);
 
       if (
@@ -21,19 +24,19 @@ export async function POST() {
         lead.scoreDemographic !== demographic ||
         lead.scoreBehavioral !== behavioral
       ) {
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: {
+        await supabaseAdmin
+          .from("Lead")
+          .update({
             score: total,
             scoreDemographic: demographic,
             scoreBehavioral: behavioral,
-          },
-        });
+          })
+          .eq("id", lead.id);
         updated++;
       }
     }
 
-    return NextResponse.json({ updated, total: leads.length });
+    return NextResponse.json({ updated, total: (leads ?? []).length });
   } catch (error) {
     console.error("Failed to recalculate scores:", error);
     return NextResponse.json(

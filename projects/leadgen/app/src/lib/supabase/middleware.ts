@@ -34,6 +34,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname === "/login";
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+
+  // Don't redirect API routes — let the route handler return 401
+  if (isApiRoute) {
+    return supabaseResponse;
+  }
 
   // If no session and not on login page, redirect to login
   if (!user && !isLoginPage) {

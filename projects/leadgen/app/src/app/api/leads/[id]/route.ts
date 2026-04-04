@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireAuth } from "@/lib/auth";
 
 export async function GET(
@@ -11,11 +11,13 @@ export async function GET(
     if (authError) return authError;
 
     const { id } = await params;
-    const lead = await prisma.lead.findUnique({
-      where: { id },
-      include: { company: true, assignedTo: true },
-    });
-    if (!lead) {
+    const { data: lead, error } = await supabaseAdmin
+      .from("Lead")
+      .select("*, company:Company(*), assignedTo:User!Lead_assignedToId_fkey(*)")
+      .eq("id", id)
+      .single();
+
+    if (error || !lead) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
     return NextResponse.json(lead);
@@ -36,18 +38,20 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Whitelist allowed fields for update
     const allowed: Record<string, unknown> = {};
     const updateableFields = ["firstName", "lastName", "email", "phone", "title", "linkedinUrl", "stage", "source", "tags", "companyId", "assignedToId"];
     for (const field of updateableFields) {
       if (body[field] !== undefined) allowed[field] = body[field];
     }
 
-    const lead = await prisma.lead.update({
-      where: { id },
-      data: allowed,
-      include: { company: true, assignedTo: true },
-    });
+    const { data: lead, error } = await supabaseAdmin
+      .from("Lead")
+      .update(allowed)
+      .eq("id", id)
+      .select("*, company:Company(*), assignedTo:User!Lead_assignedToId_fkey(*)")
+      .single();
+
+    if (error) throw error;
     return NextResponse.json(lead);
   } catch (error) {
     console.error("Failed to update lead:", error);

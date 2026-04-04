@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { parseLinkedInUrl } from "@/lib/import-utils";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,9 +31,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check duplicate by linkedinUrl
-    const existing = await prisma.lead.findFirst({
-      where: { linkedinUrl: parsed.linkedinUrl },
-    });
+    const { data: existing } = await supabaseAdmin
+      .from("Lead")
+      .select("id")
+      .eq("linkedinUrl", parsed.linkedinUrl)
+      .limit(1)
+      .single();
+
     if (existing) {
       return NextResponse.json(
         { error: "Lead with this LinkedIn URL already exists", code: "DUPLICATE_LEAD" },
@@ -41,14 +45,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const lead = await prisma.lead.create({
-      data: {
+    const { data: lead, error } = await supabaseAdmin
+      .from("Lead")
+      .insert({
         firstName: parsed.firstName,
         lastName: parsed.lastName,
         linkedinUrl: parsed.linkedinUrl,
-      },
-    });
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
     console.error("Failed to import LinkedIn lead:", error);

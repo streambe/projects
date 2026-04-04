@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /**
  * Verifies the Supabase session and returns the authenticated user.
@@ -24,10 +24,11 @@ export async function requireAuth() {
     };
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email! },
-    select: { id: true, email: true, name: true, role: true },
-  });
+  const { data: dbUser } = await supabaseAdmin
+    .from("User")
+    .select("id, email, name, role")
+    .eq("email", user.email!)
+    .single();
 
   return { user, dbUser, error: null };
 }

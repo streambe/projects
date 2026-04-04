@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -16,21 +16,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const created = await prisma.lead.createMany({
-      data: leads.map((l) => ({
-        firstName: String(l.firstName || ""),
-        lastName: String(l.lastName || ""),
-        email: l.email ? String(l.email) : null,
-        phone: l.phone ? String(l.phone) : null,
-        title: l.title ? String(l.title) : null,
-        linkedinUrl: l.linkedinUrl ? String(l.linkedinUrl) : null,
-        tags: Array.isArray(l.tags) ? l.tags.map(String) : [],
-      })),
-      skipDuplicates: true,
-    });
+    const leadsToInsert = leads.map((l) => ({
+      firstName: String(l.firstName || ""),
+      lastName: String(l.lastName || ""),
+      email: l.email ? String(l.email) : null,
+      phone: l.phone ? String(l.phone) : null,
+      title: l.title ? String(l.title) : null,
+      linkedinUrl: l.linkedinUrl ? String(l.linkedinUrl) : null,
+      tags: Array.isArray(l.tags) ? l.tags.map(String) : [],
+    }));
+
+    // Supabase doesn't have skipDuplicates natively, so we insert and handle errors
+    const { data, error } = await supabaseAdmin
+      .from("Lead")
+      .insert(leadsToInsert)
+      .select("id");
+
+    if (error) throw error;
 
     return NextResponse.json(
-      { imported: created.count },
+      { imported: data?.length ?? 0 },
       { status: 201 }
     );
   } catch (error) {

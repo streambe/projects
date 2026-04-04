@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateScore } from "@/lib/scoring";
 import { requireAuth } from "@/lib/auth";
 
@@ -12,10 +12,13 @@ export async function GET(
     if (authError) return authError;
 
     const { id } = await params;
-    const activities = await prisma.activity.findMany({
-      where: { leadId: id },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: activities, error } = await supabaseAdmin
+      .from("Activity")
+      .select("*")
+      .eq("leadId", id)
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
     return NextResponse.json(activities);
   } catch (error) {
     console.error("Failed to fetch activities:", error);
@@ -34,7 +37,6 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    // Whitelist allowed fields
     const allowedTypes = ["NOTE", "EMAIL", "CALL", "MEETING", "LINKEDIN", "OTHER"];
     if (!body.type || !allowedTypes.includes(body.type)) {
       return NextResponse.json(
@@ -52,26 +54,30 @@ export async function POST(
       subject: body.subject || null,
       content: body.content || body.description || null,
       userId: body.userId || null,
+      leadId: id,
     };
 
-    const activity = await prisma.activity.create({
-      data: {
-        ...activityData,
-        leadId: id,
-      },
-    });
+    const { data: activity, error: createError } = await supabaseAdmin
+      .from("Activity")
+      .insert(activityData)
+      .select()
+      .single();
+
+    if (createError) throw createError;
 
     // Recalculate lead score after new activity
-    const lead = await prisma.lead.findUnique({
-      where: { id },
-      include: { company: true, activities: true },
-    });
+    const { data: lead } = await supabaseAdmin
+      .from("Lead")
+      .select("*, company:Company(*), activities:Activity(*)")
+      .eq("id", id)
+      .single();
+
     if (lead) {
       const { total, demographic, behavioral } = calculateScore(lead);
-      await prisma.lead.update({
-        where: { id },
-        data: { score: total, scoreDemographic: demographic, scoreBehavioral: behavioral },
-      });
+      await supabaseAdmin
+        .from("Lead")
+        .update({ score: total, scoreDemographic: demographic, scoreBehavioral: behavioral })
+        .eq("id", id);
     }
 
     return NextResponse.json(activity, { status: 201 });

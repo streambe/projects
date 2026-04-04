@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function GET() {
   const supabase = await createClient();
@@ -16,18 +16,13 @@ export async function GET() {
     );
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email! },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      avatarUrl: true,
-    },
-  });
+  const { data: dbUser, error } = await supabaseAdmin
+    .from("User")
+    .select("id, email, name, role, avatarUrl")
+    .eq("email", user.email!)
+    .single();
 
-  if (!dbUser) {
+  if (error || !dbUser) {
     return NextResponse.json(
       { error: "User not found in database", code: "USER_NOT_FOUND" },
       { status: 404 }

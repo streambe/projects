@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -10,9 +10,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const templates = await prisma.template.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: templates, error } = await supabaseAdmin
+      .from("Template")
+      .select("*")
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
     return NextResponse.json(templates);
   } catch (error) {
     console.error("Failed to fetch templates:", error);
@@ -54,20 +57,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract variables from content
     const variableMatches = body.content.match(/\{\{(\w+)\}\}/g) || [];
     const variables = [...new Set(variableMatches.map((v: string) => v.replace(/\{\{|\}\}/g, "")))] as string[];
 
-    const template = await prisma.template.create({
-      data: {
+    const { data: template, error } = await supabaseAdmin
+      .from("Template")
+      .insert({
         name: body.name,
         channel: body.channel,
         subject: body.subject || null,
         content: body.content,
         variables,
-      },
-    });
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json(template, { status: 201 });
   } catch (error) {
     console.error("Failed to create template:", error);
