@@ -12,6 +12,7 @@
 branch: gen                        ← Framework GEN (este branch)
   /                                ← Workspace root = hogar de GEN
   ├── .claude/agents/              ← 23 agentes del equipo (requerido en root por Claude Code)
+  ├── .gen/memory/                 ← Bóveda Obsidian de memoria persistente (versionada)
   ├── CLAUDE.md                    ← Configuración maestra de GEN (este archivo)
   ├── METODOLOGIA.md               ← Metodología de desarrollo documentada
   ├── awesome-agent-skills/        ← Skills repo VoltAgent (clonar localmente, no versionar)
@@ -1281,7 +1282,452 @@ PRE-SPRINT REVIEW (OBLIGATORIO — gate antes de cerrar sprint)
 
 ---
 
-## 15. SESIÓN ACTUAL
+## 15. EL SEGUNDO CEREBRO DE GEN — BÓVEDA OBSIDIAN
+
+La bóveda Obsidian en `.gen/memory/` es el **segundo cerebro** de GEN.
+No es un log, no es un dump de datos, no es documentación muerta.
+Es una base de conocimiento viva que crece con cada sesión, cada proyecto, cada error
+y cada acierto. Su objetivo es que GEN sea más inteligente mañana que hoy,
+y dentro de años tenga la sabiduría acumulada de todos los proyectos que atravesó.
+
+**Filosofía:** Si algo fue difícil de aprender, si algo sorprendió, si algo salió mal
+o excepcionalmente bien — merece estar en la bóveda. El conocimiento que no se captura
+se pierde para siempre cuando la sesión termina.
+
+### 15.1 Qué es y para qué existe
+
+```yaml
+SEGUNDO_CEREBRO:
+  definicion: |
+    La bóveda Obsidian es la memoria de largo plazo de GEN.
+    Mientras CLAUDE.md es el estado operativo del proyecto ACTUAL,
+    la bóveda es el conocimiento ACUMULADO de todos los proyectos,
+    todas las decisiones, todos los errores, todas las preferencias.
+    Es lo que permite que GEN no empiece de cero en cada conversación.
+
+  proposito:
+    - "Recordar TODO lo que el usuario enseñó, pidió o corrigió"
+    - "Acumular lecciones de cada proyecto para aplicar en los siguientes"
+    - "Mantener el contexto de negocio que no vive en el código"
+    - "Preservar decisiones y su justificación (el POR QUÉ, no solo el QUÉ)"
+    - "Ser navegable por humanos con Obsidian y por GEN leyendo archivos"
+    - "Sobrevivir años: lo que se escribe hoy debe ser útil en 2028"
+
+  ubicacion: ".gen/memory/"
+  formato: "Obsidian vault — markdown + YAML frontmatter + [[wikilinks]]"
+  versionada: true  # Commiteada en git → persiste para siempre
+  herencia: "Branch gen tiene la base. Branches project-* la heredan y extienden."
+  app: "El usuario puede abrir .gen/memory/ como vault en Obsidian desktop"
+```
+
+### 15.2 Estructura de la bóveda
+
+```
+.gen/memory/                         ← RAÍZ DE LA BÓVEDA OBSIDIAN
+│
+├── HOME.md                          ← Punto de entrada. Mapa de navegación completo.
+│
+├── gen-docs/                        ← DOCUMENTOS CORE DEL FRAMEWORK
+│   ├── INDEX.md                     ← Índice de docs core
+│   ├── CLAUDE-md.md                 ← Espejo de /CLAUDE.md con historial de cambios
+│   ├── metodologia.md               ← Espejo de /METODOLOGIA.md
+│   ├── readme.md                    ← Espejo de /README.md
+│   ├── manual-gen.md                ← Manual de usuario completo (convertido de .docx)
+│   ├── ley-fundamental.md           ← Loop iterativo de aprobación — principio rector
+│   └── lecciones-aprendidas.md      ← Lecciones CROSS-PROYECTO acumuladas
+│
+├── feedback/                        ← REGLAS DE COMPORTAMIENTO
+│   ├── INDEX.md                     ← Índice de reglas activas
+│   └── [regla].md                   ← Una regla por archivo
+│
+├── user/                            ← PERFIL DEL USUARIO
+│   ├── INDEX.md                     ← Índice
+│   └── [memoria].md                 ← Preferencias, contexto, conocimiento del usuario
+│
+├── projects/                        ← CONTEXTO POR PROYECTO
+│   ├── INDEX.md                     ← Lista de proyectos activos/cerrados
+│   └── [proyecto].md                ← Un archivo por proyecto con estado y contexto
+│
+├── reference/                       ← RECURSOS EXTERNOS
+│   ├── INDEX.md                     ← Índice
+│   └── [recurso].md                 ← URLs, herramientas, contactos, servicios
+│
+├── decisions/                       ← DECISIONES CROSS-PROYECTO
+│   ├── INDEX.md                     ← Índice de ADRs globales
+│   └── ADR-[NNN]-[titulo].md        ← Architecture/Process Decision Records
+│
+├── team/                            ← EQUIPO GEN
+│   ├── INDEX.md                     ← Índice
+│   └── team-roster.md               ← 23 agentes con nombres, colores, roles
+│
+├── retrospectives/                  ← RETROSPECTIVAS POR SPRINT
+│   ├── INDEX.md                     ← Índice
+│   └── [proyecto]-sprint-[N].md     ← Retro de cada sprint de cada proyecto
+│
+├── patterns/                        ← PATRONES DESCUBIERTOS
+│   ├── INDEX.md                     ← Índice
+│   └── [patron].md                  ← Patrones técnicos, de proceso o de negocio reutilizables
+│
+├── templates/                       ← TEMPLATES OBSIDIAN
+│   ├── memory-template.md           ← Template genérico para nueva memoria
+│   ├── decision-template.md         ← Template para ADR
+│   ├── retro-template.md            ← Template para retrospectiva
+│   └── project-template.md          ← Template para nuevo proyecto
+│
+└── .obsidian/                       ← CONFIGURACIÓN DE OBSIDIAN
+    ├── app.json                     ← Configuración general
+    └── graph.json                   ← Colores del grafo por carpeta
+```
+
+### 15.3 Convenciones de la bóveda
+
+```yaml
+CONVENCIONES_OBSIDIAN:
+
+  # === NOMBRADO DE ARCHIVOS ===
+  nombres:
+    formato: "kebab-case siempre — ejemplo: auto-approve-mode.md"
+    prohibido: "espacios, mayúsculas, caracteres especiales, acentos"
+    indices: "Cada carpeta DEBE tener INDEX.md como punto de entrada"
+    decisiones: "ADR-[NNN]-[titulo-kebab].md — numeración global secuencial"
+    retrospectivas: "[proyecto]-sprint-[N].md"
+    proyectos: "[nombre-kebab].md"
+
+  # === FRONTMATTER OBLIGATORIO ===
+  frontmatter:
+    obligatorio_siempre:
+      - "name: título legible del archivo"
+      - "type: feedback | user | project | reference | decision | team | retro | pattern | gen-doc"
+      - "tags: [gen/tipo, gen/subtema, ...]  — jerárquicos con gen/ como raíz"
+      - "created: YYYY-MM-DD"
+      - "updated: YYYY-MM-DD  — actualizar en CADA modificación"
+    opcional:
+      - "project: nombre-del-proyecto  — si aplica a un proyecto específico"
+      - "related: [[wikilinks]]  — conexiones a otras memorias"
+      - "source: ruta del archivo fuente  — para espejos de gen-docs/"
+      - "status: active | deprecated | superseded"
+      - "sprint: N  — si aplica a un sprint específico"
+      - "sync: bidireccional | solo-lectura  — para gen-docs/"
+
+  # === WIKILINKS ===
+  wikilinks:
+    formato: "[[nombre-del-archivo]] — sin extensión .md, sin ruta"
+    campo_related: "Poner en frontmatter related: para conexiones formales"
+    inline: "Usar [[wikilinks]] inline en el cuerpo para referencias contextuales"
+    principio: "Si mencionás otra memoria, SIEMPRE ponele wikilink"
+    ejemplo_bueno: "Ver regla [[auto-approve-mode]] para excepciones"
+    ejemplo_malo: "Ver regla auto-approve-mode para excepciones"
+
+  # === TAGS JERÁRQUICOS ===
+  tags:
+    raiz: "gen/"
+    estructura: |
+      gen/core          — elementos fundamentales del framework
+      gen/feedback      — reglas de comportamiento
+      gen/user          — perfil del usuario
+      gen/project       — contexto de proyecto
+      gen/reference     — recursos externos
+      gen/decision      — ADRs y decisiones
+      gen/team          — equipo y roles
+      gen/retro         — retrospectivas
+      gen/pattern       — patrones reutilizables
+      gen/docs          — documentos core del framework
+      gen/process       — reglas de proceso
+      gen/quality       — reglas de calidad
+      gen/workflow      — reglas de flujo de trabajo
+      gen/reporting     — reglas de reporting
+      gen/escalation    — reglas de escalamiento
+    regla: "Mínimo 2 tags por archivo: gen/tipo + gen/subtema"
+
+  # === ESTRUCTURA DEL CUERPO ===
+  cuerpo:
+    titulo: "# Título — igual que frontmatter name"
+    parrafo_inicial: "1-3 oraciones que resuman la memoria. Directo al punto."
+    secciones_recomendadas:
+      feedback: "## Why + ## How to apply"
+      decision: "## Context + ## Options + ## Decision + ## Consequences"
+      retro: "## What went well + ## What went wrong + ## Actions"
+      project: "## Contexto + ## Estado + ## Decisiones clave"
+      pattern: "## Problem + ## Solution + ## When to use + ## Examples"
+    principio: "Escribir para tu yo del futuro que no recuerda nada de hoy"
+
+  # === GRAPH VIEW — COLORES ===
+  graph_colores:
+    feedback: "Naranja"
+    user: "Azul"
+    projects: "Verde"
+    decisions: "Amarillo"
+    team: "Rosa"
+    retrospectives: "Turquesa"
+    gen-docs: "Blanco"
+    patterns: "Violeta"
+    reference: "Gris"
+```
+
+### 15.4 Qué capturar y qué NO
+
+```yaml
+QUE_CAPTURAR:
+  siempre:
+    - "Feedback del usuario sobre cómo trabajar (correcciones Y confirmaciones)"
+    - "Decisiones de negocio y su justificación — el POR QUÉ"
+    - "Preferencias del usuario (estilo, proceso, comunicación)"
+    - "Lecciones aprendidas de errores y aciertos"
+    - "Patrones que funcionaron y se pueden reutilizar"
+    - "Contexto de negocio que no está en el código"
+    - "Contactos, recursos externos, URLs de herramientas"
+    - "Cambios en el equipo, roles, responsabilidades"
+    - "Restricciones no técnicas (legales, presupuesto, tiempo)"
+    - "Relaciones entre conceptos (un bug causado por una decisión anterior)"
+
+  con_criterio:
+    - "Decisiones técnicas SOLO si son cross-proyecto o sorprendentes"
+    - "Stack SOLO si la elección tuvo un motivo no obvio"
+    - "Bugs SOLO si revelan un patrón sistémico"
+
+QUE_NO_CAPTURAR:
+  nunca:
+    - "Estado efímero de la sesión actual (eso va en CLAUDE.md sección SESION_ACTUAL)"
+    - "Código fuente o snippets (están en el repo)"
+    - "Rutas de archivos o números de línea (cambian)"
+    - "Git history (usar git log)"
+    - "Información derivable leyendo el código actual"
+    - "Tareas en progreso (usar TodoWrite o CLAUDE.md)"
+    - "Duplicados de lo que ya está en CLAUDE.md"
+    - "Información que solo es útil en ESTA conversación"
+
+PRINCIPIO_DE_CAPTURA: |
+  Antes de guardar, preguntate: "¿Esto será útil en 6 meses?
+  ¿En otro proyecto? ¿Si otra persona lee esto sin contexto?"
+  Si la respuesta es NO a las tres → no guardar.
+  Si la respuesta es SÍ a al menos una → guardar.
+```
+
+### 15.5 Protocolo de uso — Cuándo leer y escribir
+
+```yaml
+PROTOCOLO:
+
+  AL_INICIO_DE_CADA_SESION:
+    obligatorio:
+      1: "Leer .gen/memory/HOME.md — mapa general + sección Recientes"
+      2: "Leer .gen/memory/feedback/INDEX.md — TODAS las reglas activas"
+      3: "Leer memorias del proyecto actual si hay uno (projects/[nombre].md)"
+      4: "Verificar que gen-docs/CLAUDE-md.md esté sincronizado con /CLAUDE.md"
+    opcional:
+      - "Leer decisions/ si hay decisiones pendientes o el usuario referencia una"
+      - "Leer patterns/ si la tarea es similar a algo que ya se hizo"
+      - "Leer retrospectives/ si se está planificando un sprint"
+
+  DURANTE_LA_SESION:
+    triggers_de_escritura:
+      - "El usuario dice 'no hagas X' o 'hacé siempre Y' → feedback/"
+      - "El usuario confirma un approach no obvio → feedback/ (éxito, no solo error)"
+      - "Se toma una decisión cross-proyecto → decisions/"
+      - "Se descubre un patrón reutilizable → patterns/"
+      - "Se aprende algo nuevo sobre el usuario o su empresa → user/"
+      - "Se conecta con un recurso externo nuevo → reference/"
+      - "Un sprint se cierra → retrospectives/ + lecciones-aprendidas.md"
+      - "Un proyecto se inicia o cambia de fase → projects/"
+    al_escribir:
+      - "SIEMPRE poner frontmatter completo"
+      - "SIEMPRE buscar si ya existe una memoria similar antes de crear nueva"
+      - "SIEMPRE usar [[wikilinks]] para conectar con memorias relacionadas"
+      - "SIEMPRE actualizar el INDEX.md de la carpeta"
+      - "SIEMPRE actualizar HOME.md sección Recientes"
+      - "Escribir en pasado o presente atemporal, NO en futuro"
+      - "Incluir fecha absoluta, NUNCA relativa ('ayer', 'la semana pasada')"
+
+  AL_CIERRE_DE_CADA_SESION:
+    obligatorio:
+      1: "Actualizar HOME.md sección Recientes con resumen de 1 línea"
+      2: "Sincronizar gen-docs/CLAUDE-md.md si /CLAUDE.md cambió estructuralmente"
+      3: "Actualizar gen-docs/lecciones-aprendidas.md si hubo lecciones nuevas"
+      4: "Commitear: chore(memory): [descripción breve del cambio]"
+    principio: |
+      Al cerrar sesión, pensar: "¿Qué aprendí hoy que no sabía ayer?
+      ¿Qué le diría a mi yo del futuro que va a retomar esto?"
+      Eso es lo que se guarda.
+
+  AL_INICIO_DE_CADA_PROYECTO:
+    1: "Crear projects/[nombre].md con template"
+    2: "Leer lecciones-aprendidas.md para no repetir errores"
+    3: "Leer patterns/ para reutilizar lo que funcionó"
+    4: "Leer feedback/ para aplicar todas las reglas del usuario"
+
+  AL_CIERRE_DE_CADA_SPRINT:
+    1: "Crear retrospectives/[proyecto]-sprint-[N].md"
+    2: "Actualizar gen-docs/lecciones-aprendidas.md con lo nuevo"
+    3: "Actualizar projects/[nombre].md con estado actual"
+    4: "Si hubo decisiones importantes → crear ADR en decisions/"
+    5: "Si se descubrió un patrón → documentar en patterns/"
+```
+
+### 15.6 Sincronización bóveda ↔ archivos root
+
+```yaml
+SINCRONIZACION:
+  principio: |
+    Los archivos en root (CLAUDE.md, METODOLOGIA.md, README.md, manual-gen.docx)
+    son la FUENTE DE VERDAD OPERATIVA — los lee Claude Code al iniciar.
+    Los archivos en gen-docs/ son ESPEJOS ENRIQUECIDOS — tienen frontmatter,
+    wikilinks, historial de cambios, y conexiones con el resto de la bóveda.
+    La sincronización es bidireccional: cambios en root se reflejan en gen-docs/
+    y cambios estructurales en gen-docs/ pueden motivar updates en root.
+
+  flujo:
+    root_cambia: |
+      Si /CLAUDE.md cambia → actualizar gen-docs/CLAUDE-md.md
+      Si /METODOLOGIA.md cambia → actualizar gen-docs/metodologia.md
+      Si /README.md cambia → actualizar gen-docs/readme.md
+      Si /manual-gen.docx cambia → reconvertir con pandoc a gen-docs/manual-gen.md
+
+    boveda_cambia: |
+      Si se agrega una lección en lecciones-aprendidas.md
+        → verificar si impacta algún proceso en CLAUDE.md y actualizar
+      Si se agrega un ADR en decisions/
+        → registrar referencia en CLAUDE.md sección ADRS
+      Si se agrega un patrón en patterns/
+        → considerar si debe reflejarse en METODOLOGIA.md
+
+  version_tracking:
+    - "gen-docs/CLAUDE-md.md tiene una tabla 'Historial de cambios relevantes'"
+    - "Actualizar esa tabla cuando CLAUDE.md cambia de versión o estructura"
+    - "Esto permite ver la evolución del framework sin hacer git log"
+```
+
+### 15.7 Templates
+
+```yaml
+TEMPLATES:
+  ubicacion: ".gen/memory/templates/"
+  uso: "Copiar el template relevante al crear una nueva memoria"
+
+  memory_template: |
+    ---
+    name: "{{titulo}}"
+    type: "{{tipo}}"
+    tags: [gen/{{tipo}}, gen/{{subtema}}]
+    created: "{{YYYY-MM-DD}}"
+    updated: "{{YYYY-MM-DD}}"
+    project: ""
+    related: []
+    ---
+    # {{titulo}}
+    {{descripción directa en 1-3 oraciones}}
+    ## Why
+    {{por qué esto importa}}
+    ## How to apply
+    {{cuándo y cómo usar esta información}}
+
+  decision_template: |
+    ---
+    name: "ADR-{{NNN}}: {{titulo}}"
+    type: decision
+    tags: [gen/decision, gen/{{area}}]
+    created: "{{YYYY-MM-DD}}"
+    updated: "{{YYYY-MM-DD}}"
+    status: "proposed | accepted | deprecated | superseded"
+    superseded_by: ""
+    related: []
+    ---
+    # ADR-{{NNN}}: {{titulo}}
+    ## Context
+    {{qué problema o necesidad motivó esta decisión}}
+    ## Options considered
+    1. {{opción A}} — pros / contras
+    2. {{opción B}} — pros / contras
+    ## Decision
+    {{qué se decidió y por qué}}
+    ## Consequences
+    {{qué implica esta decisión a futuro}}
+
+  retro_template: |
+    ---
+    name: "Retro {{proyecto}} Sprint {{N}}"
+    type: retro
+    tags: [gen/retro, {{proyecto}}]
+    created: "{{YYYY-MM-DD}}"
+    updated: "{{YYYY-MM-DD}}"
+    project: "{{proyecto}}"
+    sprint: {{N}}
+    related: []
+    ---
+    # Retrospectiva — {{proyecto}} Sprint {{N}}
+    ## What went well
+    - {{éxitos}}
+    ## What went wrong
+    - {{problemas}}
+    ## What surprised us
+    - {{lo inesperado}}
+    ## Actions for next sprint
+    - {{mejoras concretas}}
+    ## Patterns discovered
+    - {{patrones reutilizables → crear en patterns/ si aplica}}
+
+  project_template: |
+    ---
+    name: "{{nombre del proyecto}}"
+    type: project
+    tags: [gen/project, {{nombre}}]
+    created: "{{YYYY-MM-DD}}"
+    updated: "{{YYYY-MM-DD}}"
+    status: "inception | active | paused | completed | cancelled"
+    branch: "project-{{nombre}}"
+    related: []
+    ---
+    # {{nombre del proyecto}}
+    {{descripción en 1-3 oraciones}}
+    ## Contexto
+    - Tipo: nuevo | evolutivo | correctivo
+    - Cliente/sponsor: {{quién}}
+    - Objetivo: {{para qué}}
+    ## Estado
+    - Fase: {{fase actual}}
+    - Sprint: {{N}}
+    ## Decisiones clave
+    - {{decisiones importantes con link a ADR si existe}}
+    ## Stack
+    - {{resumen del stack elegido}}
+    ## Lecciones
+    - {{link a retrospectivas del proyecto}}
+```
+
+### 15.8 Obsidian para el usuario
+
+```yaml
+OBSIDIAN_USUARIO:
+  abrir_vault: |
+    1. Instalar Obsidian desde https://obsidian.md
+    2. File → Open Vault → seleccionar carpeta: .gen/memory/
+    3. El vault se abre con graph view, tags, búsqueda y todo conectado
+
+  graph_view: |
+    El grafo de Obsidian muestra TODAS las conexiones entre memorias.
+    Los colores están configurados por carpeta:
+      Naranja = feedback (reglas)
+      Azul = user (perfil)
+      Verde = projects
+      Amarillo = decisions
+      Rosa = team
+      Turquesa = retrospectives
+      Violeta = patterns
+    Los nodos más conectados son los más importantes del sistema.
+
+  busqueda: |
+    - Buscar por tag: escribir "tag:gen/feedback" en la barra de búsqueda
+    - Buscar por contenido: Ctrl+Shift+F para búsqueda global
+    - Navegar por wikilinks: click en cualquier [[link]] para ir a esa memoria
+
+  edicion_manual: |
+    El usuario PUEDE editar la bóveda directamente en Obsidian.
+    GEN leerá los cambios en la próxima sesión.
+    Recomendación: mantener el formato de frontmatter para que GEN lo parsee.
+```
+
+---
+
+## 16. SESIÓN ACTUAL
 
 ```yaml
 SESION_ACTUAL:
@@ -1316,7 +1762,7 @@ SESION_ACTUAL:
 
 ---
 
-## 16. REANUDACIÓN TRAS INTERRUPCIÓN
+## 17. REANUDACIÓN TRAS INTERRUPCIÓN
 
 ```
 SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
@@ -1343,7 +1789,7 @@ SI EL SERVICIO SE INTERRUMPIÓ O EL AGENTE SE REINICIÓ:
 
 ---
 
-## 17. PRIMER USO – SECUENCIA DE INICIO
+## 18. PRIMER USO – SECUENCIA DE INICIO
 
 ```
 Si fase_actual = "INCEPTION" y sprint_actual = 0:
