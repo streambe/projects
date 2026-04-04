@@ -21,3 +21,4 @@ Estas guias se aplican a TODOS los proyectos y sesiones futuras.
 - [[token-usage-report]] — Informe de tokens/USD por sprint y cierre
 - [[23-agents-mandatory]] — Todo proyecto debe tener los 23 agentes
 - [[scraping-municipia]] — Scraping municipal sin miedo a bloqueos
+- [[mandatory-testing-per-task]] — Tests unitarios + build obligatorios tras CADA tarea, con evidencia real

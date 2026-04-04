@@ -4,9 +4,10 @@ type: team
 tags: [gen/team]
 created: "2026-03-31"
 updated: "2026-04-03"
+
 ---
 
-# Equipo GEN — 23 agentes
+# Equipo GEN — 30 agentes
 
 | # | Rol | Nombre | Color | Agente |
 |---|-----|--------|-------|--------|
@@ -33,3 +34,10 @@ updated: "2026-04-03"
 | 21 | Tester QA 2 | Niels Bohr | Coral | tester-2 |
 | 22 | Tester QA 3 | Dorothy Hodgkin | Salmon | tester-3 |
 | 23 | Analista Funcional 2 | Hypatia de Alejandria | Perla | functional-analyst-2 |
+| 24 | CMO | Edward Bernays | Ambar | cmo |
+| 25 | Especialista LinkedIn Marketing | David Ogilvy | Carmesi | linkedin-marketing-specialist |
+| 26 | Especialista Content Marketing B2B | Claude Hopkins | Indigo | content-marketing-specialist |
+| 27 | Especialista Growth Hacking | Seth Godin | Magenta | growth-hacking-specialist |
+| 28 | Especialista ABM | Philip Kotler | Granate | abm-specialist |
+| 29 | Director Comercial | Dale Carnegie | Cian | sales-director |
+| 30 | SDR Senior | Zig Ziglar | Terracota | sdr-senior |
