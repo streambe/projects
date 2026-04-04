@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -42,70 +41,79 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <Card className="w-full max-w-sm border-slate-200 shadow-lg">
-        <CardHeader className="space-y-4 pb-2 pt-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <Users className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              LeadGen
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Inicia sesion para continuar
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="px-6 pb-8 pt-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="border-slate-300 focus-visible:ring-blue-600"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700">
-                Contrasena
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="border-slate-300 focus-visible:ring-blue-600"
-              />
-            </div>
+    <div className="relative flex min-h-screen items-center justify-center bg-white">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F5F7FF] via-white to-[#F5F7FF] opacity-60" />
 
-            {error && (
-              <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200">
-                {error}
+      <div className="relative z-10 w-full max-w-sm px-4">
+        <Card className="rounded-[18px] border border-[rgba(0,0,0,0.05)] shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+          <CardHeader className="space-y-4 pb-2 pt-10 text-center">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#3957ED]">
+              <span className="text-sm font-bold text-white tracking-tight">L</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-[#141414]">
+                Iniciar sesion
+              </h1>
+              <p className="mt-1 text-sm text-[#999999]">
+                Ingresa tus credenciales para continuar
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="px-7 pb-10 pt-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium text-[#666666]">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className="h-10 rounded-xl border-[#E8EBFF] bg-[#F5F7FF]/50 text-sm text-[#141414] placeholder:text-[#999999] focus-visible:ring-[#3957ED] transition-all duration-200"
+                />
               </div>
-            )}
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs font-medium text-[#666666]">
+                  Contrasena
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="h-10 rounded-xl border-[#E8EBFF] bg-[#F5F7FF]/50 text-sm text-[#141414] placeholder:text-[#999999] focus-visible:ring-[#3957ED] transition-all duration-200"
+                />
+              </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {loading ? "Ingresando..." : "Iniciar sesion"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              {error && (
+                <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600 border border-red-200">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-[#3957ED] text-sm font-semibold hover:bg-[#2A43D4] text-white shadow-md hover:-translate-y-px transition-all duration-200"
+              >
+                {loading ? "Ingresando..." : "Iniciar sesion"}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-[11px] text-[#999999]">
+              Powered by Streambe
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -46,11 +46,11 @@ function ActionCard({ enrollment }: { enrollment: EnrollmentWithDetails }) {
     completeStep.isPending || skipStep.isPending || pauseEnrollment.isPending;
 
   return (
-    <Card>
+    <Card className="rounded-[18px] border border-[rgba(0,0,0,0.05)] shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-200 hover:shadow-[0_12px_40px_rgba(0,0,0,0.16)] hover:-translate-y-px">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-base">
+            <CardTitle className="text-sm font-semibold text-[#141414]">
               {lead.firstName} {lead.lastName}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -135,21 +135,23 @@ export default function ActionsPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Acciones del Día</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-lg font-bold tracking-tight text-[#141414]">Acciones del Dia</h1>
+        <p className="text-xs text-[#666666] mt-1">
           Leads con acciones pendientes para hoy.
         </p>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Cargando...</p>}
+      {isLoading && <p className="text-xs text-[#999999]">Cargando...</p>}
 
       {enrollments && enrollments.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <CalendarClock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">No hay acciones pendientes</p>
-            <p className="text-muted-foreground mt-1">
-              Todas las acciones del día están completadas.
+        <Card className="rounded-[18px] border border-dashed border-[#E8EBFF]">
+          <CardContent className="py-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F5F7FF] mb-4">
+              <CalendarClock className="h-6 w-6 text-[#3957ED]" />
+            </div>
+            <p className="text-sm font-medium text-[#141414]">No hay acciones pendientes</p>
+            <p className="text-xs text-[#999999] mt-1">
+              Todas las acciones del dia estan completadas.
             </p>
           </CardContent>
         </Card>

@@ -185,7 +185,7 @@ export function SequenceFormDialog({ sequenceId, templates, onClose }: Props) {
             {steps.map((step, index) => (
               <div
                 key={index}
-                className="border rounded-lg p-3 space-y-3"
+                className="border border-[#E8EBFF] rounded-xl p-3 space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">

@@ -26,15 +26,15 @@ import { Stage } from "@/types";
 import type { Lead } from "@/types";
 
 const STAGES: { key: Stage; label: string; color: string }[] = [
-  { key: Stage.NEW, label: "New", color: "bg-slate-500" },
+  { key: Stage.NEW, label: "New", color: "bg-[#999999]" },
   { key: Stage.CONNECTED, label: "Connected", color: "bg-sky-500" },
-  { key: Stage.ENGAGED, label: "Engaged", color: "bg-blue-500" },
+  { key: Stage.ENGAGED, label: "Engaged", color: "bg-[#3957ED]" },
   { key: Stage.MQL, label: "MQL", color: "bg-indigo-500" },
   { key: Stage.SQL, label: "SQL", color: "bg-violet-500" },
   { key: Stage.MEETING_SCHEDULED, label: "Meeting", color: "bg-purple-500" },
   { key: Stage.PROPOSAL_SENT, label: "Proposal", color: "bg-fuchsia-500" },
   { key: Stage.NEGOTIATION, label: "Negotiation", color: "bg-amber-500" },
-  { key: Stage.WON, label: "Won", color: "bg-emerald-500" },
+  { key: Stage.WON, label: "Won", color: "bg-[#25D366]" },
   { key: Stage.LOST, label: "Lost", color: "bg-red-500" },
 ];
 
@@ -52,15 +52,15 @@ function KanbanColumn({ stage, leads, onCardClick }: KanbanColumnProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col shrink-0 w-72 rounded-xl transition-colors ${
-        isOver ? "bg-blue-50 ring-2 ring-blue-300" : "bg-slate-50/80"
+      className={`flex flex-col shrink-0 w-72 rounded-[18px] transition-all duration-200 ${
+        isOver ? "bg-[#F5F7FF] ring-2 ring-[#3957ED]/30" : "bg-[#F5F7FF]/60"
       }`}
     >
       {/* Column header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200">
-        <div className={`w-2.5 h-2.5 rounded-full ${stage.color}`} />
-        <span className="text-sm font-semibold text-slate-700">{stage.label}</span>
-        <span className="ml-auto text-xs font-medium text-slate-400 bg-slate-200/60 rounded-full px-2 py-0.5">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[rgba(0,0,0,0.05)]">
+        <div className={`w-2 h-2 rounded-full ${stage.color}`} />
+        <span className="text-xs font-semibold text-[#141414]">{stage.label}</span>
+        <span className="ml-auto text-[10px] font-semibold text-[#3957ED] bg-[#E8EBFF] rounded-full px-1.5 py-0.5">
           {leads.length}
         </span>
       </div>
@@ -76,7 +76,7 @@ function KanbanColumn({ stage, leads, onCardClick }: KanbanColumnProps) {
             />
           ))}
           {leads.length === 0 && (
-            <div className="flex items-center justify-center h-20 text-xs text-slate-400">
+            <div className="flex items-center justify-center h-20 text-xs text-[#999999]">
               Drop leads here
             </div>
           )}
@@ -173,7 +173,7 @@ export function KanbanBoard({ search, stageFilter, scoreMin, scoreMax }: KanbanB
     return (
       <div className="flex gap-4 p-4">
         {STAGES.map((s) => (
-          <div key={s.key} className="w-72 h-96 rounded-xl bg-slate-100 animate-pulse shrink-0" />
+          <div key={s.key} className="w-72 h-96 rounded-[18px] bg-[#F5F7FF] animate-pulse shrink-0" />
         ))}
       </div>
     );

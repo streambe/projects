@@ -10,6 +10,7 @@ export type {
   Alert,
 } from "@/generated/prisma/client";
 
+// Import enums from the dedicated enums file (safe for client bundles)
 export {
   Role,
   CompanySize,
@@ -17,4 +18,4 @@ export {
   ActivityType,
   Channel,
   EnrollmentStatus,
-} from "@/generated/prisma/client";
+} from "@/generated/prisma/enums";

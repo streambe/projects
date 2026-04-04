@@ -1,47 +1,35 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Bell, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
+const BREADCRUMB_LABELS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/pipeline": "Pipeline",
+  "/sequences": "Sequences",
+  "/actions": "Actions",
+  "/templates": "Templates",
+  "/import": "Import",
+};
 
 export function Header() {
-  const router = useRouter();
-
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
+  const pathname = usePathname();
+  const pageTitle = BREADCRUMB_LABELS[pathname] || "LeadGen";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b px-6">
-      <div />
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon">
-          <Bell className="h-4 w-4" />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar sesion
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <header className="flex h-14 items-center justify-between border-b border-[rgba(0,0,0,0.05)] bg-white px-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-sm font-bold text-[#141414] tracking-tight">{pageTitle}</h2>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#999999]" />
+          <Input
+            placeholder="Search..."
+            className="h-9 w-56 rounded-full border-[#E8EBFF] bg-[#F5F7FF] pl-9 text-xs text-[#141414] placeholder:text-[#999999] focus-visible:ring-[#3957ED] transition-all duration-200"
+          />
+        </div>
       </div>
     </header>
   );
