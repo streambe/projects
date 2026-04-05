@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const RAPIDAPI_HOST = "fresh-linkedin-profile-data.p.rapidapi.com";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -21,39 +21,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { title_keywords, geo_codes, keywords, limit } = body;
+    const { searchParams } = new URL(request.url);
+    const requestId = searchParams.get("request_id");
 
-    if (!title_keywords || !Array.isArray(title_keywords) || title_keywords.length === 0) {
+    if (!requestId) {
       return NextResponse.json(
-        { error: "title_keywords array is required", code: "MISSING_TITLE_KEYWORDS" },
+        { error: "request_id is required", code: "MISSING_REQUEST_ID" },
         { status: 400 }
       );
     }
 
     const response = await fetch(
-      `https://${RAPIDAPI_HOST}/search-employees`,
+      `https://${RAPIDAPI_HOST}/get-search-results?request_id=${encodeURIComponent(requestId)}`,
       {
-        method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "X-RapidAPI-Key": apiKey,
           "X-RapidAPI-Host": RAPIDAPI_HOST,
         },
-        body: JSON.stringify({
-          title_keywords,
-          geo_codes: geo_codes || [],
-          keywords: keywords || "",
-          limit: limit || 25,
-        }),
       }
     );
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("RapidAPI search-employees error:", response.status, text);
+      console.error("RapidAPI get-search-results error:", response.status, text);
       return NextResponse.json(
-        { error: "LinkedIn search failed", code: "RAPIDAPI_ERROR", details: response.status },
+        { error: "Results fetch failed", code: "RAPIDAPI_ERROR", details: response.status },
         { status: 502 }
       );
     }
@@ -61,9 +53,9 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("LinkedIn search error:", error);
+    console.error("LinkedIn results error:", error);
     return NextResponse.json(
-      { error: "Internal server error", code: "SEARCH_ERROR" },
+      { error: "Internal server error", code: "RESULTS_ERROR" },
       { status: 500 }
     );
   }

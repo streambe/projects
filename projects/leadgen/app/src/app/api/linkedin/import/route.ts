@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { calculateScore } from "@/lib/scoring";
-import type { LinkedInSearchResult } from "@/lib/linkedin-constants";
+import type { LinkedInEmployee } from "@/lib/linkedin-constants";
 
 interface ImportRequest {
-  profiles: LinkedInSearchResult[];
+  profiles: LinkedInEmployee[];
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
     const supabase = await createClient();
     const {
       data: { user },
@@ -39,24 +38,22 @@ export async function POST(request: NextRequest) {
         const { data: existing } = await supabaseAdmin
           .from("Lead")
           .select("id")
-          .eq("linkedinUrl", profile.profile_url)
+          .eq("linkedinUrl", profile.linkedin_url)
           .limit(1)
           .single();
 
         if (existing) {
-          skipped.push(
-            `${profile.full_name} — already exists`
-          );
+          skipped.push(`${profile.full_name} — already exists`);
           continue;
         }
 
         // Create or find company
         let companyId: string | null = null;
-        if (profile.current_company?.name) {
+        if (profile.company) {
           const { data: existingCompany } = await supabaseAdmin
             .from("Company")
             .select("id")
-            .eq("name", profile.current_company.name)
+            .eq("name", profile.company)
             .limit(1)
             .single();
 
@@ -67,9 +64,10 @@ export async function POST(request: NextRequest) {
               await supabaseAdmin
                 .from("Company")
                 .insert({
-                  name: profile.current_company.name,
-                  linkedin: profile.current_company.linkedin_url || null,
-                  industry: profile.current_company.industry || null,
+                  name: profile.company,
+                  linkedin: profile.company_id
+                    ? `https://www.linkedin.com/company/${profile.company_id}/`
+                    : null,
                 })
                 .select("id")
                 .single();
@@ -87,10 +85,10 @@ export async function POST(request: NextRequest) {
           id: "",
           firstName: profile.first_name,
           lastName: profile.last_name,
-          title: profile.headline,
+          title: profile.job_title,
           email: null,
           phone: null,
-          linkedinUrl: profile.profile_url,
+          linkedinUrl: profile.linkedin_url,
           linkedinProfile: null,
           stage: "NEW",
           score: 0,
@@ -103,14 +101,14 @@ export async function POST(request: NextRequest) {
           tags: [],
           createdAt: new Date(),
           updatedAt: new Date(),
-          company: profile.current_company
+          company: profile.company
             ? {
                 id: companyId || "",
-                name: profile.current_company.name,
-                industry: profile.current_company.industry || null,
+                name: profile.company,
+                industry: null,
                 size: null,
                 website: null,
-                linkedin: profile.current_company.linkedin_url || null,
+                linkedin: null,
                 country: null,
                 city: null,
                 createdAt: new Date(),
@@ -126,8 +124,8 @@ export async function POST(request: NextRequest) {
           .insert({
             firstName: profile.first_name,
             lastName: profile.last_name,
-            title: profile.headline || null,
-            linkedinUrl: profile.profile_url,
+            title: profile.job_title || null,
+            linkedinUrl: profile.linkedin_url,
             linkedinProfile: profile as unknown as Record<string, unknown>,
             companyId,
             score: scoreResult.total,
@@ -140,8 +138,7 @@ export async function POST(request: NextRequest) {
         if (leadError) throw leadError;
         imported.push(lead.id);
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "Unknown error";
+        const msg = err instanceof Error ? err.message : "Unknown error";
         errors.push(`${profile.full_name}: ${msg}`);
       }
     }
