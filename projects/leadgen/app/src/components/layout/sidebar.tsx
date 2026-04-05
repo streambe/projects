@@ -9,6 +9,7 @@ import {
   FileText,
   Upload,
   CalendarClock,
+  Search,
   ChevronDown,
   LogOut,
   Settings,
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/sequences", label: "Sequences", icon: Zap },
   { href: "/actions", label: "Actions", icon: CalendarClock },
   { href: "/templates", label: "Templates", icon: FileText },
+  { href: "/linkedin", label: "Buscar LinkedIn", icon: Search },
   { href: "/import", label: "Import", icon: Upload },
 ];
 
