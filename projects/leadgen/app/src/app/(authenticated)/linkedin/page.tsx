@@ -17,7 +17,9 @@ import {
   MapPin,
   Briefcase,
   Check,
+  Send,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,6 +189,7 @@ export default function LinkedInSearchPage() {
     importMutation.mutate(profiles);
   }
 
+  const router = useRouter();
   const results = resultsQuery.data?.data || [];
   const isSearching = startSearch.isPending || (requestId && !searchDone);
   const statusData = statusQuery.data;
@@ -585,7 +588,7 @@ export default function LinkedInSearchPage() {
                 <X className="h-4 w-4 text-emerald-400 hover:text-emerald-600" />
               </button>
             </div>
-            <div className="flex gap-4 text-xs">
+            <div className="flex items-center gap-4 text-xs">
               <span className="text-emerald-700">
                 <strong>{importMutation.data.imported}</strong> importados
               </span>
@@ -598,6 +601,19 @@ export default function LinkedInSearchPage() {
                 <span className="text-red-600">
                   <strong>{importMutation.data.errors.length}</strong> errores
                 </span>
+              )}
+              {importMutation.data.imported > 0 && importMutation.data.leadIds?.length > 0 && (
+                <Button
+                  size="sm"
+                  className="rounded-full bg-[#3957ED] hover:bg-[#2A43D4] text-white text-[11px] h-7 px-4 ml-auto gap-1.5 shadow-sm"
+                  onClick={() => {
+                    const ids = importMutation.data.leadIds.join(",");
+                    router.push(`/outreach?leadIds=${ids}`);
+                  }}
+                >
+                  <Send className="h-3 w-3" />
+                  Preparar mensajes
+                </Button>
               )}
             </div>
           </CardContent>

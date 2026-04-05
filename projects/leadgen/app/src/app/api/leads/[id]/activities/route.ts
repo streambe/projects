@@ -37,7 +37,7 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    const allowedTypes = ["NOTE", "EMAIL", "CALL", "MEETING", "LINKEDIN", "OTHER"];
+    const allowedTypes = ["NOTE", "EMAIL", "CALL", "MEETING", "LINKEDIN", "OTHER", "LINKEDIN_VIEW", "LINKEDIN_CONNECT", "LINKEDIN_MESSAGE", "LINKEDIN_INMAIL", "EMAIL_SENT", "EMAIL_RECEIVED", "STAGE_CHANGE", "SCORE_CHANGE"];
     if (!body.type || !allowedTypes.includes(body.type)) {
       return NextResponse.json(
         { error: "Valid activity type is required", code: "INVALID_TYPE" },
