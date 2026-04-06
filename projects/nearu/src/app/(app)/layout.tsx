@@ -52,19 +52,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-900">
-        <div className="mx-auto flex max-w-md items-center justify-around py-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-800/80 bg-slate-950/85 backdrop-blur-xl">
+        <div
+          className="mx-auto flex max-w-md items-center justify-around py-2"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0.5rem)' }}
+        >
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <button
                 key={href}
                 onClick={() => router.push(href)}
-                className={`flex flex-col items-center gap-1 px-4 py-1 text-xs transition ${
-                  active ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'
+                className={`relative flex flex-col items-center gap-1 px-5 py-1.5 text-[11px] font-medium transition-all duration-200 ${
+                  active
+                    ? 'text-teal-300'
+                    : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                <Icon active={active} />
+                {active && (
+                  <span className="absolute inset-x-3 -top-[9px] h-0.5 rounded-full bg-teal-400 shadow-[0_0_12px_rgba(20,184,166,0.8)]" />
+                )}
+                <span
+                  className={`transition-transform duration-200 ${
+                    active ? 'scale-110 drop-shadow-[0_0_6px_rgba(20,184,166,0.6)]' : ''
+                  }`}
+                >
+                  <Icon active={active} />
+                </span>
                 {label}
               </button>
             );

@@ -24,6 +24,7 @@ import {
   ScanningIndicator,
   EmptyState,
 } from '@/components/app/scanning-indicator';
+import { SkeletonPersonCard } from '@/components/ui/skeleton';
 import type { Participant } from '@/lib/types';
 
 interface NearbyPerson {
@@ -139,66 +140,105 @@ export default function NearbyPage() {
   );
 
   const count = filteredPeople.length;
+  const eventName = sessionRef.current?.event.name;
+  const isLoadingInitial =
+    isScanning && count === 0 && !error && participantMap.size === 0;
 
   return (
     <>
-      <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-24 pt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4">
-          <div>
-            <h1 className="text-xl font-bold text-white">Nearby</h1>
-            <p className="text-xs text-slate-500">
-              {isScanning
-                ? count > 0
-                  ? `${count} ${count === 1 ? 'person' : 'people'} nearby`
-                  : 'Scanning...'
-                : 'Not scanning'}
-            </p>
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col bg-app-ambient px-4 pb-24">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-slate-800/60 bg-slate-950/80 px-4 pb-3 pt-4 backdrop-blur-xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-white">
+                  Nearby
+                </h1>
+                {isScanning && (
+                  <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-teal-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-dot-pulse" />
+                    Live
+                  </span>
+                )}
+              </div>
+              {eventName && (
+                <p className="mt-0.5 truncate text-xs text-slate-400">
+                  {eventName}
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {count > 0 && (
+                <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-teal-300">
+                  {count} {count === 1 ? 'person' : 'people'}
+                </span>
+              )}
+              <button
+                onClick={() => setShowFilter(true)}
+                aria-label="Filter nearby people"
+                className={`relative rounded-xl border p-2.5 transition ${
+                  hasActiveFilters(filters)
+                    ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
+                    : 'border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-white'
+                }`}
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" strokeLinecap="round" />
+                </svg>
+                {hasActiveFilters(filters) && (
+                  <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(20,184,166,0.8)]" />
+                )}
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowFilter(true)}
-            className={`relative rounded-xl border p-2.5 transition ${
-              hasActiveFilters(filters)
-                ? 'border-teal-500/40 bg-teal-500/10 text-teal-400'
-                : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" strokeLinecap="round" />
-            </svg>
-            {hasActiveFilters(filters) && (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-teal-500" />
-            )}
-          </button>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 animate-fade-in-up">
             {error}
           </div>
         )}
 
         {/* Content */}
-        {isScanning && count === 0 && !error && (
+        {isLoadingInitial && (
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <SkeletonPersonCard key={i} />
+            ))}
+          </div>
+        )}
+
+        {isScanning && count === 0 && !error && !isLoadingInitial && (
           <ScanningIndicator />
         )}
 
         {!isScanning && count === 0 && !error && (
-          <EmptyState message="No one nearby yet. Walk around to discover people!" />
+          <EmptyState message="Walk around to discover people at the event." />
         )}
 
         {count > 0 && (
           <div className="flex flex-col gap-2">
-            {filteredPeople.map((person) => (
-              <NearbyPersonCard
+            {filteredPeople.map((person, idx) => (
+              <div
                 key={person.participant.id}
-                participant={person.participant}
-                distance={person.distance}
-                lastSeen={person.lastSeen}
-                onClick={() => handlePersonClick(person.participant.id)}
-              />
+                className={`animate-fade-in-up stagger-${Math.min(idx + 1, 8)}`}
+              >
+                <NearbyPersonCard
+                  participant={person.participant}
+                  distance={person.distance}
+                  lastSeen={person.lastSeen}
+                  onClick={() => handlePersonClick(person.participant.id)}
+                />
+              </div>
             ))}
           </div>
         )}
