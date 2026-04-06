@@ -1,0 +1,22 @@
+<!-- Add these entries inside the top-level <dict> of ios/App/App/Info.plist -->
+
+<!-- Bluetooth -->
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>nearU uses Bluetooth to detect nearby event participants.</string>
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>nearU uses Bluetooth to broadcast your presence at events.</string>
+
+<!-- Location -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>nearU uses your location to enhance proximity detection at events.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>nearU uses background location to maintain proximity detection during events.</string>
+
+<!-- Background Modes -->
+<key>UIBackgroundModes</key>
+<array>
+    <string>bluetooth-central</string>
+    <string>bluetooth-peripheral</string>
+    <string>location</string>
+    <string>remote-notification</string>
+</array>

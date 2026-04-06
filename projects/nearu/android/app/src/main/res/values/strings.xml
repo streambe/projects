@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">nearU</string>
+    <string name="title_activity_main">nearU</string>
+    <string name="package_name">com.streambe.nearu</string>
+    <string name="custom_url_scheme">com.streambe.nearu</string>
+</resources>
