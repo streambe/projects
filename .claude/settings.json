@@ -10,6 +10,27 @@
       "env": {
         "COMPOSIO_API_KEY": "${COMPOSIO_API_KEY}"
       }
+    },
+    "frame0": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "frame0-mcp-server"
+      ]
+    },
+    "magic-ui": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@magicuidesign/mcp@latest"
+      ]
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@heilgar/shadcn-ui-mcp-server"
+      ]
     }
   }
 }
